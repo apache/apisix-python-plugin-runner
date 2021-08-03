@@ -14,8 +14,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-def main() -> None:
+import click
+from runner.socket.server import Server as A6SocketServer
+
+RUNNER_VERSION = "0.1.0"
+RUNNER_SOCKET = "/tmp/runner.sock"
+
+
+@click.group()
+@click.version_option(version=RUNNER_VERSION)
+def runner() -> None:
     pass
+
+
+@runner.command()
+@click.option('--debug/--no-debug', help='enable or disable debug, default disable.', default=False)
+def start(debug) -> None:
+    click.echo(debug)
+    server = A6SocketServer(RUNNER_SOCKET)
+    server.receive()
+
+
+def main() -> None:
+    runner()
 
 
 if __name__ == '__main__':
