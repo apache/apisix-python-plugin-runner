@@ -19,3 +19,4 @@ setup:
 	python3 -m pip install --upgrade pip
 	python3 -m pip install a6pluginprotos --ignore-installed
 	python3 -m pip install minicache --ignore-installed
+	python3 -m pip install click --ignore-installed
