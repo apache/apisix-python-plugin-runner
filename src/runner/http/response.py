@@ -42,6 +42,13 @@ class Response(object):
     def getRpcType(self) -> int:
         return self.response.get("rpc_type", 0)
 
+    def setErrorCode(self, error_code: int) -> Response:
+        self.response["error_code"] = error_code
+        return self
+
+    def getErrorCode(self) -> int:
+        return self.response.get("error_code", A6ErrCode.Code.BAD_REQUEST)
+
     def setId(self, id: int) -> Response:
         self.response["id"] = id
         return self
@@ -153,9 +160,22 @@ class Response(object):
             A6HTTPReqCallResp.AddAction(builder, stop)
             res = A6HTTPReqCallResp.End(builder)
             builder.Finish(res)
+        elif rpcType == RunnerHttpProtocol.RPC_TEST:
+            body = self.getBody()
+            bodyVector = builder.CreateByteVector(body)
+            A6HTTPReqCallStop.Start(builder)
+            A6HTTPReqCallStop.AddBody(builder, bodyVector)
+            stop = A6HTTPReqCallStop.End(builder)
+
+            A6HTTPReqCallResp.Start(builder)
+            A6HTTPReqCallResp.AddId(builder, 1)
+            A6HTTPReqCallResp.AddActionType(builder, A6HTTPReqCallAction.Action.Stop)
+            A6HTTPReqCallResp.AddAction(builder, stop)
+            res = A6HTTPReqCallResp.End(builder)
+            builder.Finish(res)
         else:
             A6ErrResp.Start(builder)
-            A6ErrResp.AddCode(builder, A6ErrCode.Code.BAD_REQUEST)
+            A6ErrResp.AddCode(builder, self.getErrorCode())
             res = A6ErrResp.End(builder)
             builder.Finish(res)
         return builder
