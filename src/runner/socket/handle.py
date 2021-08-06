@@ -14,65 +14,95 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from a6pluginproto.Err import Resp as A6ErrResp
+from __future__ import annotations
 from a6pluginproto.Err import Code as A6ErrCode
 import runner.plugin.cache as RunnerPluginCache
 import runner.plugin.execute as RunnerPluginExecute
 import runner.http.request as RunnerHttpRequest
 import runner.http.response as RunnerHttpResponse
 import runner.http.protocol as RunnerHttpProtocol
+import runner.socket.error as RunnerSocketError
 
 
-class Handle:
+class New(object):
 
-    def __init__(self, req_type, req_data):
-        self.req_type = req_type
-        self.req_data = req_data
+    def __init__(self, ty: int = 0, buf: bytes = b''):
+        self.__buffer = buf
+        self.__type = ty
 
-    def RpcPrepareConf(self):
+    def __rpc_config(self) -> RunnerSocketError:
         # init request
-        req = RunnerHttpRequest.Request(RunnerHttpProtocol.RPC_PREPARE_CONF, self.req_data)
+        req = RunnerHttpRequest.Request(RunnerHttpProtocol.RPC_PREPARE_CONF, self.__buffer)
         # generate token
         token = RunnerPluginCache.generateToken()
         # get plugins config
         configs = req.getConfigs()
         # cache plugins config
-        RunnerPluginCache.setConfigByToken(token, configs)
+        ok = RunnerPluginCache.setConfigByToken(token, configs)
+        if not ok:
+            return RunnerSocketError.New(A6ErrCode.Code.SERVICE_UNAVAILABLE, "cache token failure")
         # init response
         reps = RunnerHttpResponse.Response(RunnerHttpProtocol.RPC_PREPARE_CONF)
+        response = reps.setToken(token).responseToFlatBuffers()
 
-        return reps.setToken(token).responseToFlatBuffers()
+        return RunnerSocketError.New(code=RunnerSocketError.RUNNER_SUCCESS_CODE, message="OK", data=response.Output(),
+                                     ty=self.__type)
 
-    def RpcHttpReqCall(self):
+    def __rpc_call(self) -> RunnerSocketError:
         # init request
-        req = RunnerHttpRequest.Request(RunnerHttpProtocol.RPC_HTTP_REQ_CALL, self.req_data)
+        req = RunnerHttpRequest.Request(RunnerHttpProtocol.RPC_HTTP_REQ_CALL, self.__buffer)
         # get request token
         token = req.getConfToken()
         # get plugins
         configs = RunnerPluginCache.getConfigByToken(token)
+        if len(configs) == 0:
+            return RunnerSocketError.New(A6ErrCode.Code.CONF_TOKEN_NOT_FOUND, "cache token not found")
         # init response
         reps = RunnerHttpResponse.Response(RunnerHttpProtocol.RPC_HTTP_REQ_CALL)
         # execute plugins
         RunnerPluginExecute.executeFilter(configs, req, reps)
 
-        return reps.responseToFlatBuffers()
+        response = reps.responseToFlatBuffers()
+        return RunnerSocketError.New(code=RunnerSocketError.RUNNER_SUCCESS_CODE, message="OK", data=response.Output(),
+                                     ty=self.__type)
 
-    def RpcTest(self):
-        pass
+    def __rpc_test(self) -> RunnerSocketError:
+        # init response
+        reps = RunnerHttpResponse.Response(RunnerHttpProtocol.RPC_TEST)
+        reps.setBody("Hello, Python Runner of APISIX")
+        response = reps.responseToFlatBuffers()
+        return RunnerSocketError.New(code=RunnerSocketError.RUNNER_SUCCESS_CODE, message="OK", data=response.Output(),
+                                     ty=self.__type)
 
-    def RpcUnknown(self):
-        builder = RunnerHttpProtocol.newBuilder()
-        A6ErrResp.Start(builder)
-        A6ErrResp.AddCode(builder, A6ErrCode.Code.BAD_REQUEST)
-        res = A6ErrResp.End(builder)
-        builder.Finish(res)
-        return builder
+    @staticmethod
+    def __rpc_unknown(err_code: int = 0) -> RunnerSocketError:
+        resp = RunnerHttpResponse.Response(RunnerHttpProtocol.RPC_ERROR)
+        resp.setErrorCode(err_code)
+        response = resp.responseToFlatBuffers()
+        return RunnerSocketError.New(code=RunnerSocketError.RUNNER_SUCCESS_CODE, message="OK", data=response.Output(),
+                                     ty=RunnerHttpProtocol.RPC_ERROR)
 
-    def dispatch(self):
-        handler = {
-            RunnerHttpProtocol.RPC_UNKNOWN: self.RpcUnknown,
-            RunnerHttpProtocol.RPC_TEST: self.RpcTest,
-            RunnerHttpProtocol.RPC_PREPARE_CONF: self.RpcPrepareConf,
-            RunnerHttpProtocol.RPC_HTTP_REQ_CALL: self.RpcHttpReqCall,
-        }
-        return {"type": self.req_type, "data": handler.get(self.req_type, self.RpcUnknown)().Output()}
+    def dispatch(self) -> RunnerSocketError:
+        err = None
+
+        if self.__type == RunnerHttpProtocol.RPC_PREPARE_CONF:
+            err = self.__rpc_config()
+
+        if self.__type == RunnerHttpProtocol.RPC_HTTP_REQ_CALL:
+            err = self.__rpc_call()
+
+        if self.__type == RunnerHttpProtocol.RPC_TEST:
+            err = self.__rpc_test()
+
+        if not err:
+            return self.__rpc_unknown()
+
+        size = len(err.data())
+        if (size > RunnerHttpResponse.RESP_MAX_DATA_SIZE or size <= 0) and err.code() == 200:
+            err = RunnerSocketError.New(A6ErrCode.Code.SERVICE_UNAVAILABLE,
+                                        "the max length of data is %d but got %d" % (
+                                            RunnerHttpResponse.RESP_MAX_DATA_SIZE, size))
+        if err.code() != 200:
+            print("ERR: %s" % err.message())
+            err = self.__rpc_unknown(err.code())
+        return err

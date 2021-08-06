@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 import click
-from runner.socket.server import Server as A6SocketServer
+import runner.socket.server as RunnerSocketServer
 
 RUNNER_VERSION = "0.1.0"
 RUNNER_SOCKET = "/tmp/runner.sock"
@@ -31,7 +31,7 @@ def runner() -> None:
 @click.option('--debug/--no-debug', help='enable or disable debug, default disable.', default=False)
 def start(debug) -> None:
     click.echo(debug)
-    server = A6SocketServer(RUNNER_SOCKET)
+    server = RunnerSocketServer.New(RUNNER_SOCKET)
     server.receive()
 
 

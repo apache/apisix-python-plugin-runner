@@ -16,75 +16,37 @@
 #
 import os
 import socket
-from _thread import start_new_thread
-from runner.socket.handle import Handle as A6ServerHandle
-
-
-def runner_protocol_decode(buf):
-    """
-    decode for runner protocol
-    :param buf:
-    :return:
-    """
-    if not buf:
-        return None, "runner protocol undefined."
-    if len(buf) != 4:
-        return None, "runner protocol invalid."
-
-    buf = bytearray(buf)
-    # request buf type
-    buf_type = buf[0]
-    buf[0] = 0
-    # request buf length
-    buf_len = int.from_bytes(buf, byteorder="big")
-    return {"type": buf_type, "len": buf_len}, None
-
-
-def runner_protocol_encode(reps_type, reps_data):
-    """
-    encode for runner protocol
-    :param reps_type:
-    :param reps_data:
-    :return:
-    """
-    reps_len = len(reps_data)
-    reps_header = reps_len.to_bytes(4, byteorder="big")
-    reps_header = bytearray(reps_header)
-    reps_header[0] = reps_type
-    reps_header = bytes(reps_header)
-    return reps_header + reps_data
+from threading import Thread as NewThread
+import runner.socket.handle as RunnerSocketHandle
+import runner.socket.protocol as RunnerSocketProtocol
 
 
 def threaded(conn):
     while True:
-        header_buf = conn.recv(4)
-        protocol, err = runner_protocol_decode(header_buf)
-        if err:
-            print(err)
+        buffer = conn.recv(4)
+        protocol = RunnerSocketProtocol.New(buffer, 0)
+        err = protocol.decode()
+        if err.code() != 200:
+            print(err.message())
             break
 
-        # rpc request type
-        req_type = protocol.get("type")
-        # rpc request length
-        req_len = protocol.get("len")
+        buffer = conn.recv(protocol.length())
+        handler = RunnerSocketHandle.New(protocol.type(), buffer)
+        response = handler.dispatch()
 
-        req_data = conn.recv(req_len)
+        protocol = RunnerSocketProtocol.New(response.data(), response.type())
+        protocol.encode()
+        response = protocol.buffer()
 
-        rpc_handler = A6ServerHandle(req_type, req_data)
-        response = rpc_handler.dispatch()
-
-        reps_type = response.get("type")
-        reps_data = response.get("data")
-        reps = runner_protocol_encode(reps_type, reps_data)
-
-        err = conn.sendall(reps)
+        err = conn.sendall(response)
         if err:
             print(err)
-            break
+        break
+
     conn.close()
 
 
-class Server:
+class New:
     def __init__(self, socket_address):
         if os.path.exists(socket_address):
             os.remove(socket_address)
@@ -98,7 +60,7 @@ class Server:
         while True:
             conn, address = self.sock.accept()
 
-            start_new_thread(threaded, (conn,))
+            NewThread(target=threaded, args=(conn,)).start()
 
     def __del__(self):
         self.sock.close()
