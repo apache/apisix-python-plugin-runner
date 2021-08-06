@@ -29,8 +29,6 @@ errorCodes = [
 
 class New(object):
     def __init__(self, code: int, message: str, data: bytes = b'', ty: int = 0):
-        if data is None:
-            data = {}
         self.__code = code
         self.__message = message
         self.__type = ty
