@@ -14,10 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import runner.socket.error as RunnerSocketError
+from src.runner.socket.error import Error as NewServerError
+from src.runner.socket.error import RUNNER_ERROR_CODE
+from src.runner.socket.error import RUNNER_SUCCESS_CODE
 
 
-class New(object):
+class Protocol(object):
 
     def __init__(self, buffer: bytes = b'', ty: int = 0):
         self.__buffer = buffer
@@ -45,13 +47,13 @@ class New(object):
         """
         return self.__buffer
 
-    def encode(self) -> RunnerSocketError.New:
+    def encode(self) -> NewServerError:
         """
         encode protocol buffer data
         :return:
         """
         if len(self.__buffer) == 0:
-            return RunnerSocketError.New(RunnerSocketError.RUNNER_ERROR_CODE, "ERR: send buffer is empty")
+            return NewServerError(RUNNER_ERROR_CODE, "ERR: send buffer is empty")
         response_len = len(self.__buffer)
         response_header = response_len.to_bytes(4, byteorder="big")
         response_header = bytearray(response_header)
@@ -59,22 +61,22 @@ class New(object):
         response_header = bytes(response_header)
         self.__buffer = response_header + self.__buffer
         self.__length = len(self.__buffer)
-        return RunnerSocketError.New(code=RunnerSocketError.RUNNER_SUCCESS_CODE, message="OK")
+        return NewServerError(code=RUNNER_SUCCESS_CODE, message="OK")
 
-    def decode(self) -> RunnerSocketError.New:
+    def decode(self) -> NewServerError:
         """
         decode protocol buffer data
         :return:
         """
         if len(self.__buffer) == 0:
-            return RunnerSocketError.New(RunnerSocketError.RUNNER_ERROR_CODE, "ERR: recv buffer is empty")
+            return NewServerError(RUNNER_ERROR_CODE, "ERR: recv buffer is empty")
         length = len(self.__buffer)
         if length != 4:
-            return RunnerSocketError.New(RunnerSocketError.RUNNER_ERROR_CODE,
-                                         "ERR: recv protocol type length is 4, got %d" % length)
+            return NewServerError(RUNNER_ERROR_CODE,
+                                  "ERR: recv protocol type length is 4, got %d" % length)
 
         buf = bytearray(self.__buffer)
         self.__type = buf[0]
         buf[0] = 0
         self.__length = int.from_bytes(buf, byteorder="big")
-        return RunnerSocketError.New(code=RunnerSocketError.RUNNER_SUCCESS_CODE, message="OK")
+        return NewServerError(code=RUNNER_SUCCESS_CODE, message="OK")
