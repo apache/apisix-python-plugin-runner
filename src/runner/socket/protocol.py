@@ -17,6 +17,7 @@
 from src.runner.socket.error import Error as NewServerError
 from src.runner.socket.error import RUNNER_ERROR_CODE
 from src.runner.socket.error import RUNNER_SUCCESS_CODE
+from src.runner.socket.error import RUNNER_SUCCESS_MESSAGE
 
 
 class Protocol(object):
@@ -61,7 +62,7 @@ class Protocol(object):
         response_header = bytes(response_header)
         self.__buffer = response_header + self.__buffer
         self.__length = len(self.__buffer)
-        return NewServerError(code=RUNNER_SUCCESS_CODE, message="OK")
+        return NewServerError(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE)
 
     def decode(self) -> NewServerError:
         """
@@ -79,4 +80,4 @@ class Protocol(object):
         self.__type = buf[0]
         buf[0] = 0
         self.__length = int.from_bytes(buf, byteorder="big")
-        return NewServerError(code=RUNNER_SUCCESS_CODE, message="OK")
+        return NewServerError(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE)
