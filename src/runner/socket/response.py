@@ -29,25 +29,31 @@ errorCodes = [
 ]
 
 
-class Error(object):
+class Response:
     def __init__(self, code: int = 0, message: str = '', data: bytes = b'', ty: int = 0):
         self.__code = code
         self.__message = message
         self.__type = ty
         self.__data = data
 
-    def __eq__(self, other: Error) -> bool:
-        return self.code() == other.code() and \
-               self.message() == other.message()
+    def __eq__(self, other: Response) -> bool:
+        return self.code == other.code and \
+               self.message == other.message and \
+               self.data == other.data and \
+               self.type == other.type
 
+    @property
     def code(self) -> int:
         return self.__code
 
+    @property
     def message(self) -> str:
         return self.__message
 
+    @property
     def data(self) -> bytes:
         return self.__data
 
+    @property
     def type(self) -> int:
         return self.__type

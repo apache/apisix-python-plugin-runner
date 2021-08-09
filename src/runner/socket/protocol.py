@@ -14,19 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from src.runner.socket.error import Error as NewServerError
-from src.runner.socket.error import RUNNER_ERROR_CODE
-from src.runner.socket.error import RUNNER_SUCCESS_CODE
-from src.runner.socket.error import RUNNER_SUCCESS_MESSAGE
+from src.runner.socket.response import Response as NewServerResponse
+from src.runner.socket.response import RUNNER_ERROR_CODE
+from src.runner.socket.response import RUNNER_SUCCESS_CODE
+from src.runner.socket.response import RUNNER_SUCCESS_MESSAGE
 
 
-class Protocol(object):
+class Protocol:
 
     def __init__(self, buffer: bytes = b'', ty: int = 0):
         self.__buffer = buffer
         self.__type = ty
         self.__length = 0
 
+    @property
     def length(self) -> int:
         """
         get buffer length
@@ -34,6 +35,7 @@ class Protocol(object):
         """
         return self.__length
 
+    @property
     def type(self) -> int:
         """
         get protocol type
@@ -41,6 +43,7 @@ class Protocol(object):
         """
         return self.__type
 
+    @property
     def buffer(self) -> bytes:
         """
         get buffer data
@@ -48,13 +51,13 @@ class Protocol(object):
         """
         return self.__buffer
 
-    def encode(self) -> NewServerError:
+    def encode(self) -> NewServerResponse:
         """
         encode protocol buffer data
         :return:
         """
         if len(self.__buffer) == 0:
-            return NewServerError(RUNNER_ERROR_CODE, "ERR: send buffer is empty")
+            return NewServerResponse(RUNNER_ERROR_CODE, "ERR: send buffer is empty")
         response_len = len(self.__buffer)
         response_header = response_len.to_bytes(4, byteorder="big")
         response_header = bytearray(response_header)
@@ -62,22 +65,22 @@ class Protocol(object):
         response_header = bytes(response_header)
         self.__buffer = response_header + self.__buffer
         self.__length = len(self.__buffer)
-        return NewServerError(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE)
+        return NewServerResponse(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE)
 
-    def decode(self) -> NewServerError:
+    def decode(self) -> NewServerResponse:
         """
         decode protocol buffer data
         :return:
         """
         if len(self.__buffer) == 0:
-            return NewServerError(RUNNER_ERROR_CODE, "ERR: recv buffer is empty")
+            return NewServerResponse(RUNNER_ERROR_CODE, "ERR: recv buffer is empty")
         length = len(self.__buffer)
         if length != 4:
-            return NewServerError(RUNNER_ERROR_CODE,
-                                  "ERR: recv protocol type length is 4, got %d" % length)
+            return NewServerResponse(RUNNER_ERROR_CODE,
+                                     "ERR: recv protocol type length is 4, got %d" % length)
 
         buf = bytearray(self.__buffer)
         self.__type = buf[0]
         buf[0] = 0
         self.__length = int.from_bytes(buf, byteorder="big")
-        return NewServerError(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE)
+        return NewServerResponse(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE)
