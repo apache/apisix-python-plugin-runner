@@ -20,3 +20,8 @@ setup:
 	python3 -m pip install a6pluginprotos --ignore-installed
 	python3 -m pip install minicache --ignore-installed
 	python3 -m pip install click --ignore-installed
+	python3 -m pip install pytest --ignore-installed
+
+.PHONY: test
+test:
+	pytest .
