@@ -20,7 +20,7 @@ import click
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from apisix.runner.plugin.core import loading
+from apisix.runner.server.server import Server as NewServer
 
 RUNNER_VERSION = "0.1.0"
 RUNNER_SOCKET = "/tmp/runner.sock"
@@ -36,9 +36,8 @@ def runner() -> None:
 @click.option('--debug/--no-debug', help='enable or disable debug, default disable.', default=False)
 def start(debug) -> None:
     click.echo(debug)
-    loading()
-    # server = NewServer(RUNNER_SOCKET)
-    # server.receive()
+    server = NewServer(RUNNER_SOCKET)
+    server.receive()
 
 
 def main() -> None:
