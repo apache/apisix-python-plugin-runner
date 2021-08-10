@@ -18,9 +18,8 @@ import flatbuffers
 
 RPC_PREPARE_CONF = 1
 RPC_HTTP_REQ_CALL = 2
-RPC_TEST = 127
 RPC_UNKNOWN = 0
 
 
-def newBuilder():
+def new_builder():
     return flatbuffers.Builder(256)

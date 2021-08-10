@@ -69,9 +69,9 @@ methodCode = {
 }
 
 
-def getNameByCode(code: int) -> str:
+def get_name_by_code(code: int) -> str:
     return methodName.get(code)
 
 
-def getCodeByName(name: str) -> int:
+def get_code_by_name(name: str) -> int:
     return methodCode.get(name)

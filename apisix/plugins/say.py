@@ -14,26 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import json
+from apisix.runner.plugin.base import Base
+from apisix.runner.http.request import Request
+from apisix.runner.http.response import Response
 
 
-class Base(object):
-    def __init__(self, name: str):
-        self.pluginName = name
-        self.pluginConfig = {}
+class Say(Base):
+    def __init__(self):
+        super(Say, self).__init__(self.__class__.__name__)
 
-    def name(self) -> str:
-        return self.pluginName
-
-    def config(self) -> dict:
-        return self.pluginConfig
-
-    def setConfig(self, config: dict):
-        if config and isinstance(config, str):
-            try:
-                conf = json.loads(config)
-            except ValueError:
-                self.pluginConfig = {}
-            else:
-                self.pluginConfig = conf
-        return self
+    def filter(self, request: Request, response: Response):
+        headers = request.headers
+        headers["X-Resp-A6-Runner"] = "Python"
+        response.body = "Hello, Python Runner of APISIX"
+        response.headers = headers

@@ -14,17 +14,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from runner.http.request import Request
-from runner.http.response import Response
+import os
+import sys
+import click
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from apisix.runner.plugin.core import loading
+
+RUNNER_VERSION = "0.1.0"
+RUNNER_SOCKET = "/tmp/runner.sock"
 
 
-def executeFilter(configs: dict, request: Request, response: Response):
-    for name in configs:
-        plugin = configs.get(name)
-        if not plugin:
-            print("plugin undefined.")
-            continue
-        try:
-            plugin.filter(request, response)
-        except Exception as e:
-            print(e)
+@click.group()
+@click.version_option(version=RUNNER_VERSION)
+def runner() -> None:
+    pass
+
+
+@runner.command()
+@click.option('--debug/--no-debug', help='enable or disable debug, default disable.', default=False)
+def start(debug) -> None:
+    click.echo(debug)
+    loading()
+    # server = NewServer(RUNNER_SOCKET)
+    # server.receive()
+
+
+def main() -> None:
+    runner()
+
+
+if __name__ == '__main__':
+    main()

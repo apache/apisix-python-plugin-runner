@@ -17,26 +17,26 @@
 import os
 import socket
 from threading import Thread as NewThread
-import runner.socket.handle as RunnerSocketHandle
-import runner.socket.protocol as RunnerSocketProtocol
+from apisix.runner.server.handle import Handle as NewServerHandle
+from apisix.runner.server.protocol import Protocol as NewServerProtocol
 
 
-def threaded(conn):
+def _threaded(conn: socket, debug: bool):
     while True:
         buffer = conn.recv(4)
-        protocol = RunnerSocketProtocol.New(buffer, 0)
+        protocol = NewServerProtocol(buffer, 0)
         err = protocol.decode()
-        if err.code() != 200:
-            print(err.message())
+        if err.code != 200:
+            print(err.message)
             break
 
-        buffer = conn.recv(protocol.length())
-        handler = RunnerSocketHandle.New(protocol.type(), buffer)
+        buffer = conn.recv(protocol.length)
+        handler = NewServerHandle(protocol.type, buffer)
         response = handler.dispatch()
 
-        protocol = RunnerSocketProtocol.New(response.data(), response.type())
+        protocol = NewServerProtocol(response.data, response.type)
         protocol.encode()
-        response = protocol.buffer()
+        response = protocol.buffer
 
         err = conn.sendall(response)
         if err:
@@ -46,22 +46,25 @@ def threaded(conn):
     conn.close()
 
 
-class New:
-    def __init__(self, socket_address):
-        if os.path.exists(socket_address):
-            os.remove(socket_address)
-        self.socket_address = socket_address
+class Server:
+    def __init__(self, fd: str, debug: bool = False):
+        self.fd = fd
+        self.debug = debug
+        if os.path.exists(fd):
+            os.remove(fd)
+        self.socket_address = fd
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.bind(socket_address)
+        self.sock.bind(fd)
         self.sock.listen(1024)
-        print("listening on unix:%s" % socket_address)
+        print("listening on unix:%s" % fd)
 
     def receive(self):
         while True:
             conn, address = self.sock.accept()
 
-            NewThread(target=threaded, args=(conn,)).start()
+            NewThread(target=_threaded, args=(conn, self.debug)).start()
 
     def __del__(self):
         self.sock.close()
+        os.remove(self.fd)
         print("Bye")

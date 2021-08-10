@@ -14,15 +14,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import runner.plugin.base
-from runner.http.request import Request
-from runner.http.response import Response
-
-
-class Say(runner.plugin.base.Base):
-    def __init__(self):
-        super(Say, self).__init__(self.__class__.__name__)
-
-    def filter(self, request: Request, response: Response):
-        response.setHeader("X-Resp-A6-Runner", "Python")
-        response.setBody("Hello, Python Runner of APISIX")

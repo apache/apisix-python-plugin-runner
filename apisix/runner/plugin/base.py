@@ -14,30 +14,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import click
-import runner.socket.server as RunnerSocketServer
 
-RUNNER_VERSION = "0.1.0"
-RUNNER_SOCKET = "/tmp/runner.sock"
+class Base:
+    def __init__(self, name: str):
+        """
+        plugin base class
+        :param name:
+            instance plugin name
+        """
+        self._name = name
+        self._config = {}
 
+    @property
+    def name(self) -> str:
+        return self._name
 
-@click.group()
-@click.version_option(version=RUNNER_VERSION)
-def runner() -> None:
-    pass
+    @name.setter
+    def name(self, name: str) -> None:
+        self._name = name
 
+    @property
+    def config(self) -> dict:
+        return self._config
 
-@runner.command()
-@click.option('--debug/--no-debug', help='enable or disable debug, default disable.', default=False)
-def start(debug) -> None:
-    click.echo(debug)
-    server = RunnerSocketServer.New(RUNNER_SOCKET)
-    server.receive()
-
-
-def main() -> None:
-    runner()
-
-
-if __name__ == '__main__':
-    main()
+    @config.setter
+    def config(self, config: dict) -> None:
+        if config and isinstance(config, dict):
+            self._config = config
+        else:
+            self._config = {}
