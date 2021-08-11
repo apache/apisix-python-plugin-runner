@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 import json
+from ipaddress import IPv4Address
+from ipaddress import IPv6Address
 import apisix.runner.plugin.core as RunnerPlugin
 import apisix.runner.http.method as RunnerMethod
 from apisix.runner.http.protocol import RPC_HTTP_REQ_CALL
@@ -47,85 +49,170 @@ class Request:
 
     @property
     def rpc_type(self) -> int:
+        """
+        get request protocol type for request handler
+        :return:
+        """
         return self._rpc_type
 
     @rpc_type.setter
     def rpc_type(self, rpc_type: int) -> None:
+        """
+        set request protocol type for request handler
+        :param rpc_type:
+        :return:
+        """
         self._rpc_type = rpc_type
 
     @property
     def rpc_buf(self) -> bytes:
+        """
+        get request buffer data for request handler
+        :return:
+        """
         return self._rpc_buf
 
     @rpc_buf.setter
     def rpc_buf(self, rpc_buf: bytes) -> None:
+        """
+        set request buffer data for request handler
+        :return:
+        """
         self._rpc_buf = rpc_buf
 
     @property
     def conf_token(self) -> int:
+        """
+        get request token for request handler
+        :return:
+        """
         return self._req_conf_token
 
     @conf_token.setter
     def conf_token(self, req_conf_token: int) -> None:
+        """
+        set request token for request handler
+        :return:
+        """
         self._req_conf_token = req_conf_token
 
     @property
     def id(self) -> int:
+        """
+        get request id for request handler
+        :return:
+        """
         return self._req_id
 
     @id.setter
     def id(self, req_id: int) -> None:
+        """
+        set request id for request handler
+        :return:
+        """
         self._req_id = req_id
 
     @property
     def method(self) -> str:
+        """
+        get request method for request handler
+        :return:
+        """
         return self._req_method
 
     @method.setter
     def method(self, req_method: str) -> None:
+        """
+        set request method for request handler
+        :return:
+        """
         self._req_method = req_method
 
     @property
     def path(self) -> str:
+        """
+        get request path for request handler
+        :return:
+        """
         return self._req_path
 
     @path.setter
     def path(self, req_path: str) -> None:
+        """
+        set request path for request handler
+        :return:
+        """
         self._req_path = req_path
 
     @property
     def headers(self) -> dict:
+        """
+        get request headers for request handler
+        :return:
+        """
         return self._req_headers
 
     @headers.setter
     def headers(self, req_headers: dict) -> None:
+        """
+        set request headers for request handler
+        :return:
+        """
         self._req_headers = req_headers
 
     @property
     def configs(self) -> dict:
+        """
+        get plugin instance and configs for request handler
+        :return:
+        """
         return self._req_configs
 
     @configs.setter
     def configs(self, req_configs: dict) -> None:
+        """
+        set plugin instance and configs for request handler
+        :return:
+        """
         self._req_configs = req_configs
 
     @property
     def args(self) -> dict:
+        """
+        get request args for request handler
+        :return:
+        """
         return self._req_args
 
     @args.setter
     def args(self, req_args: dict) -> None:
+        """
+        set request args for request handler
+        :return:
+        """
         self._req_args = req_args
 
     @property
     def src_ip(self) -> str:
+        """
+        get request source ip address for request handler
+        :return:
+        """
         return self._req_src_ip
 
     @src_ip.setter
     def src_ip(self, req_src_ip: str) -> None:
+        """
+        set request source ip address for request handler
+        :return:
+        """
         self._req_src_ip = req_src_ip
 
     def reset(self) -> None:
+        """
+        reset request handler
+        :return:
+        """
         """
         reset request class
         :return:
@@ -147,14 +234,20 @@ class Request:
         :param req:
         :return:
         """
-        if not req.SrcIpIsNone():
-            delimiter = "."
-            if req.SrcIpLength() > 4:
-                delimiter = ":"
-            ipAddress = []
-            for i in range(req.SrcIpLength()):
-                ipAddress.append(str(req.SrcIp(i)))
-            self.src_ip = delimiter.join(ipAddress)
+        if req.SrcIpIsNone():
+            return
+        ip_len = req.SrcIpLength()
+        if ip_len == 0:
+            return
+        ip_arr = bytearray()
+        for i in range(ip_len):
+            ip_arr.append(req.SrcIp(i))
+        ip_byte = bytes(ip_arr)
+
+        if ip_len == 4:
+            self.src_ip = IPv4Address(ip_byte).exploded
+        if ip_len == 16:
+            self.src_ip = IPv6Address(ip_byte).exploded
 
     def _parse_headers(self, req: A6HTTPReqCallReq) -> None:
         """
@@ -206,7 +299,7 @@ class Request:
 
     def _init(self) -> None:
         """
-        init request class
+        init request handler
         :return:
         """
         if self.rpc_type == RPC_HTTP_REQ_CALL:

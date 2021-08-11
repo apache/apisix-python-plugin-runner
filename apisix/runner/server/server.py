@@ -48,15 +48,14 @@ def _threaded(conn: socket, debug: bool):
 
 class Server:
     def __init__(self, fd: str, debug: bool = False):
-        self.fd = fd
+        self.fd = fd.replace("unix:", "")
         self.debug = debug
-        if os.path.exists(fd):
-            os.remove(fd)
-        self.socket_address = fd
+        if os.path.exists(self.fd):
+            os.remove(self.fd)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.bind(fd)
+        self.sock.bind(self.fd)
         self.sock.listen(1024)
-        print("listening on unix:%s" % fd)
+        print("listening on unix:%s" % self.fd)
 
     def receive(self):
         while True:

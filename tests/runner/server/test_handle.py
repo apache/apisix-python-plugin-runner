@@ -82,8 +82,8 @@ def test_dispatch_call():
     # request path
     path = builder.CreateString("/hello/python/runner")
     # request ip
-    ipaddress = bytes(bytearray([127, 0, 0, 1]))
-    src_ip = builder.CreateByteVector(ipaddress)
+    src_ip = bytes(bytearray([127, 0, 0, 1]))
+    src_ip = builder.CreateByteVector(src_ip)
     # request args
     arg_k = builder.CreateString("hello")
     arg_v = builder.CreateString("world")

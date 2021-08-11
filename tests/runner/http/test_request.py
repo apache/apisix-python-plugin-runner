@@ -57,8 +57,8 @@ def test_request_call():
 
     builder = new_builder()
     path = builder.CreateString(req_path)
-    ipaddress = bytes(bytearray(req_src_ip))
-    src_ip = builder.CreateByteVector(ipaddress)
+    src_ip = bytes(bytearray(req_src_ip))
+    src_ip = builder.CreateByteVector(src_ip)
 
     arg_k = builder.CreateString("a")
     arg_v = builder.CreateString(req_args.get("a"))

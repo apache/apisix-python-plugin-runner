@@ -23,12 +23,12 @@ def filter(configs: dict, request, response) -> None:
     for name in configs:
         plugin = configs.get(name)
         if not plugin:
-            print("plugin undefined.")
+            print("ERR: plugin `%s` undefined." % name)
             continue
         try:
             plugin.filter(request, response)
-        except Exception as e:
-            print(e)
+        finally:
+            print("ERR: plugin `%s` filter execute failure" % name)
 
 
 def loading() -> dict:

@@ -115,23 +115,23 @@ class Handle:
                                  ty=RPC_UNKNOWN)
 
     def dispatch(self) -> NewServerResponse:
-        err = None
+        resp = None
 
         if self.type == RPC_PREPARE_CONF:
-            err = self._rpc_config()
+            resp = self._rpc_config()
 
         if self.type == RPC_HTTP_REQ_CALL:
-            err = self._rpc_call()
+            resp = self._rpc_call()
 
-        if not err:
+        if not resp:
             return self._rpc_unknown()
 
-        size = len(err.data)
-        if (size > RESP_MAX_DATA_SIZE or size <= 0) and err.code == 200:
-            err = NewServerResponse(A6ErrCode.Code.SERVICE_UNAVAILABLE,
-                                    "the max length of data is %d but got %d" % (
-                                        RESP_MAX_DATA_SIZE, size))
-        if err.code != 200:
-            print("ERR: %s" % err.message)
-            err = self._rpc_unknown(err.code)
-        return err
+        size = len(resp.data)
+        if (size > RESP_MAX_DATA_SIZE or size <= 0) and resp.code == 200:
+            resp = NewServerResponse(A6ErrCode.Code.SERVICE_UNAVAILABLE,
+                                     "the max length of data is %d but got %d" % (
+                                         RESP_MAX_DATA_SIZE, size))
+        if resp.code != 200:
+            print("ERR: %s" % resp.message)
+            resp = self._rpc_unknown(resp.code)
+        return resp

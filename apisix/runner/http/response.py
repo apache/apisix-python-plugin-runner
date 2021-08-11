@@ -32,6 +32,11 @@ RESP_MAX_DATA_SIZE = 2 << 24 - 1
 class Response:
 
     def __init__(self, ty: int):
+        """
+        Init and parse request
+        :param ty:
+            rpc request protocol type
+        """
         self.rpc_type = ty
         self._resp_id = 0
         self._resp_token = 0
@@ -42,61 +47,121 @@ class Response:
 
     @property
     def rpc_type(self) -> int:
+        """
+        get protocol type for response handler
+        :return:
+        """
         return self._rpc_type
 
     @rpc_type.setter
     def rpc_type(self, rpc_type: int) -> None:
+        """
+        set protocol type for response handler
+        :return:
+        """
         self._rpc_type = rpc_type
 
     @property
     def id(self) -> int:
+        """
+        get request id for response handler
+        :return:
+        """
         return self._resp_id
 
     @id.setter
     def id(self, resp_id: int) -> None:
+        """
+        set request id for response handler
+        :return:
+        """
         self._resp_id = resp_id
 
     @property
     def token(self) -> int:
+        """
+        get token for response handler
+        :return:
+        """
         return self._resp_token
 
     @token.setter
     def token(self, resp_token: int) -> None:
+        """
+        set token for response handler
+        :return:
+        """
         self._resp_token = resp_token
 
     @property
     def body(self) -> str:
+        """
+        get body for response handler
+        :return:
+        """
         return self._resp_body
 
     @body.setter
     def body(self, resp_body: str) -> None:
+        """
+        set body for response handler
+        :return:
+        """
         self._resp_body = resp_body
 
     @property
     def headers(self) -> dict:
+        """
+        get headers for response handler
+        :return:
+        """
         return self._resp_headers
 
     @headers.setter
     def headers(self, resp_headers: dict) -> None:
+        """
+        set headers for response handler
+        :return:
+        """
         self._resp_headers = resp_headers
 
     @property
     def status_code(self) -> int:
+        """
+        get status code for response handler
+        :return:
+        """
         return self._resp_status_code
 
     @status_code.setter
     def status_code(self, resp_status_code: int) -> None:
+        """
+        set status code for response handler
+        :return:
+        """
         self._resp_status_code = resp_status_code
 
     @property
     def error_code(self) -> int:
+        """
+        get error code for response handler
+        :return:
+        """
         return self._resp_error_code
 
     @error_code.setter
     def error_code(self, resp_error_code: int = 0) -> None:
+        """
+        set error code for response handler
+        :return:
+        """
         self._resp_error_code = resp_error_code
 
     def reset(self) -> None:
+        """
+        reset response handler
+        :return:
+        """
         self._rpc_type = 0
         self._resp_id = 0
         self._resp_token = 0
@@ -106,12 +171,20 @@ class Response:
         self._resp_error_code = 0
 
     def changed(self) -> bool:
+        """
+        check response handler is change
+        :return:
+        """
         if self.body or self.headers or self.status_code or self.token or self.error_code:
             return True
         else:
             return False
 
     def flatbuffers(self) -> flatbuffers.Builder:
+        """
+        response to flat buffer object
+        :return:
+        """
         builder = new_builder()
         rpc_type = self.rpc_type
 
