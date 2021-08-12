@@ -14,33 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import click
 
-from apisix.runner.server.server import Server as NewServer
+from setuptools import setup, find_packages
 
-RUNNER_VERSION = "0.1.0"
-RUNNER_SOCKET = os.getenv("APISIX_LISTEN_ADDRESS", "/tmp/runner.sock")
+__version__ = "0.1.0"
 
+requirements = open('requirements.txt').readlines()
 
-@click.group()
-@click.version_option(version=RUNNER_VERSION)
-def runner() -> None:
-    pass
-
-
-@runner.command()
-@click.option('--debug/--no-debug', help='enable or disable debug, default disable.', default=False)
-def start(debug) -> None:
-    click.echo(debug)
-    click.echo(RUNNER_SOCKET)
-    server = NewServer(RUNNER_SOCKET)
-    server.receive()
-
-
-def main() -> None:
-    runner()
-
-
-if __name__ == '__main__':
-    main()
+setup(
+    name="apache-apisix",
+    version=__version__,
+    description="Python Plugin Runner for Apache APISIX",
+    url="https://github.com/apache/apisix-python-plugin-runner",
+    author="Jinchao Shuai",
+    author_email="dev@apisix.apache.org",
+    license="Apache 2.0",
+    python_requires=">=3.6.0",
+    packages=find_packages(exclude=["tests"]),
+    install_requires=requirements,
+)

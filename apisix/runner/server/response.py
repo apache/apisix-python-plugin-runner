@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from __future__ import annotations
+
 from a6pluginproto.Err import Code as A6ErrCode
 
 RUNNER_SUCCESS_CODE = 200
@@ -36,11 +36,11 @@ class Response:
         self.__type = ty
         self.__data = data
 
-    def __eq__(self, other: Response) -> bool:
-        return self.code == other.code and \
-               self.message == other.message and \
-               self.data == other.data and \
-               self.type == other.type
+    def __eq__(self, response) -> bool:
+        return self.code == response.code and \
+               self.message == response.message and \
+               self.data == response.data and \
+               self.type == response.type
 
     @property
     def code(self) -> int:
