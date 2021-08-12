@@ -14,15 +14,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import runner.plugin.base
-from runner.http.request import Request
-from runner.http.response import Response
+import os
+import sys
+import click
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from apisix.runner.server.server import Server as NewServer
+
+RUNNER_VERSION = "0.1.0"
+RUNNER_SOCKET = os.getenv("APISIX_LISTEN_ADDRESS", "/tmp/runner.sock")
 
 
-class Say(runner.plugin.base.Base):
-    def __init__(self):
-        super(Say, self).__init__(self.__class__.__name__)
+@click.group()
+@click.version_option(version=RUNNER_VERSION)
+def runner() -> None:
+    pass
 
-    def filter(self, request: Request, response: Response):
-        response.setHeader("X-Resp-A6-Runner", "Python")
-        response.setBody("Hello, Python Runner of APISIX")
+
+@runner.command()
+@click.option('--debug/--no-debug', help='enable or disable debug, default disable.', default=False)
+def start(debug) -> None:
+    click.echo(debug)
+    click.echo(RUNNER_SOCKET)
+    server = NewServer(RUNNER_SOCKET)
+    server.receive()
+
+
+def main() -> None:
+    runner()
+
+
+if __name__ == '__main__':
+    main()

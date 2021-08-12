@@ -14,17 +14,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from runner.http.request import Request
-from runner.http.response import Response
+import os
+import importlib
+from pkgutil import iter_modules
 
 
-def executeFilter(configs: dict, request: Request, response: Response):
+def filter(configs: dict, request, response) -> None:
     for name in configs:
         plugin = configs.get(name)
         if not plugin:
-            print("plugin undefined.")
+            print("ERR: plugin `%s` undefined." % name)
             continue
         try:
             plugin.filter(request, response)
-        except Exception as e:
-            print(e)
+        finally:
+            print("ERR: plugin `%s` filter execute failure" % name)
+
+
+def loading() -> dict:
+    path = "%s/plugins" % os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    modules = iter_modules(path=[path])
+    plugins = {}
+
+    for loader, moduleName, _ in modules:
+        classNameConversion = list(map(lambda name: name.capitalize(), moduleName.split("_")))
+        className = "".join(classNameConversion)
+        classInstance = getattr(importlib.import_module("apisix.plugins.%s" % moduleName), className)
+        plugins[str(moduleName).lower()] = classInstance
+
+    return plugins

@@ -14,18 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import importlib
-from pkgutil import iter_modules
+from minicache import cache
+
+RUNNER_CACHE_TOKEN = "RUNNER:CACHE:TOKEN"
+RUNNER_CACHE_ENTRY = "RUNNER:CACHE:ENTRY"
 
 
-def instances() -> dict:
-    modules = iter_modules(__import__("plugins").__path__)
-    plugins = {}
+def generate_token() -> int:
+    token = cache.get(RUNNER_CACHE_TOKEN, 0)
+    token = token + 1
+    cache.update(RUNNER_CACHE_TOKEN, token)
+    return token
 
-    for loader, moduleName, _ in modules:
-        classNameConversion = list(map(lambda name: name.capitalize(), moduleName.split("_")))
-        className = "".join(classNameConversion)
-        classInstance = getattr(importlib.import_module("plugins.%s" % moduleName), className)
-        plugins[str(moduleName).lower()] = classInstance
 
-    return plugins
+def set_config_by_token(token: int, configs: dict) -> bool:
+    cache_key = "%s:%s" % (RUNNER_CACHE_ENTRY, token)
+    cache.update(cache_key, configs)
+    return cache.has(cache_key)
+
+
+def get_config_by_token(token: int):
+    cache_key = "%s:%s" % (RUNNER_CACHE_ENTRY, token)
+    return cache.get(cache_key, {})

@@ -14,30 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import click
-from runner.socket.server import Server as A6SocketServer
 
-RUNNER_VERSION = "0.1.0"
-RUNNER_SOCKET = "/tmp/runner.sock"
-
-
-@click.group()
-@click.version_option(version=RUNNER_VERSION)
-def runner() -> None:
-    pass
+from apisix.runner.plugin.cache import generate_token
+from apisix.runner.plugin.cache import get_config_by_token
+from apisix.runner.plugin.cache import set_config_by_token
 
 
-@runner.command()
-@click.option('--debug/--no-debug', help='enable or disable debug, default disable.', default=False)
-def start(debug) -> None:
-    click.echo(debug)
-    server = A6SocketServer(RUNNER_SOCKET)
-    server.receive()
-
-
-def main() -> None:
-    runner()
-
-
-if __name__ == '__main__':
-    main()
+def test_cache():
+    cache_config = {"hello": "world"}
+    token = generate_token()
+    config = get_config_by_token(token)
+    assert not config
+    ok = set_config_by_token(token, cache_config)
+    assert ok
+    config = get_config_by_token(token)
+    assert config == cache_config

@@ -14,25 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from minicache import cache
 
-RUNNER_CACHE_TOKEN = "RUNNER:CACHE:TOKEN"
-RUNNER_CACHE_ENTRY = "RUNNER:CACHE:ENTRY"
+from apisix.runner.plugin.base import Base
 
 
-def generateToken() -> int:
-    token = cache.get(RUNNER_CACHE_TOKEN, 0)
-    token = token + 1
-    cache.update(RUNNER_CACHE_TOKEN, token)
-    return token
+def test_base():
+    hello_name = "hello"
+    hello_config = {"body": "apisix"}
+    hello = Base(hello_name)
+    hello.config = hello_config
+    assert hello.name == hello_name
+    assert hello.config == hello_config
 
-
-def setConfigByToken(token: int, configs: dict) -> bool:
-    cache_key = "%s:%s" % (RUNNER_CACHE_ENTRY, token)
-    cache.update(cache_key, configs)
-    return cache.has(cache_key)
-
-
-def getConfigByToken(token: int):
-    cache_key = "%s:%s" % (RUNNER_CACHE_ENTRY, token)
-    return cache.get(cache_key, {})
+    world_name = "world"
+    world_config = "apisxi"
+    world = Base(world_name)
+    world.config = world_config
+    assert world.name == world_name
+    assert world.config != world_config

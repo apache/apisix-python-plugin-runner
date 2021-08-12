@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from src.runner.socket.response import Response as NewServerResponse
-from src.runner.socket.response import RUNNER_ERROR_CODE
-from src.runner.socket.response import RUNNER_SUCCESS_CODE
-from src.runner.socket.response import RUNNER_SUCCESS_MESSAGE
+from apisix.runner.server.response import Response as NewServerResponse
+from apisix.runner.server.response import RUNNER_ERROR_CODE
+from apisix.runner.server.response import RUNNER_SUCCESS_CODE
+from apisix.runner.server.response import RUNNER_SUCCESS_MESSAGE
 
 
 class Protocol:
