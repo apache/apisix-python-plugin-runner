@@ -17,7 +17,7 @@
 # under the License.
 #
 
-name: Unit Test CI
+name: Runner Test
 
 on:
   push:
@@ -27,7 +27,7 @@ on:
     branches:
       - master
 jobs:
-  RunTest:
+  RunPython:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -44,7 +44,5 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Set up dependencies
         run: make setup install
-      - name: Lint codes
-        run: make lint
       - name: Run unit tests
         run: make test
