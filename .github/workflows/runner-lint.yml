@@ -17,7 +17,7 @@
 # under the License.
 #
 
-name: Runner Lint
+name: Runner Lint Check
 
 on:
   push:
@@ -27,7 +27,7 @@ on:
     branches:
       - master
 jobs:
-  RunPython:
+  Run:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source codes
