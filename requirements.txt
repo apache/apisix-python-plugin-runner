@@ -1,0 +1,3 @@
+a6pluginprotos==0.1.0
+click==8.0.1
+minicache==0.0.1

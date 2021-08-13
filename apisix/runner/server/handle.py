@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from __future__ import annotations
+
 from a6pluginproto.Err import Code as A6ErrCode
 import apisix.runner.plugin.core as RunnerPlugin
 import apisix.runner.plugin.cache as RunnerCache

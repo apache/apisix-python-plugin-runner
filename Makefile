@@ -17,11 +17,32 @@
 .PHONY: setup
 setup:
 	python3 -m pip install --upgrade pip
-	python3 -m pip install a6pluginprotos --ignore-installed
-	python3 -m pip install minicache --ignore-installed
-	python3 -m pip install click --ignore-installed
-	python3 -m pip install pytest --ignore-installed
+	python3 -m pip install -r requirements.txt --ignore-installed
+
 
 .PHONY: test
 test:
-	python3 -m pytest -v tests
+	pytest --version || python3 -m pip install pytest-cov
+	python3 -m pytest --cov=apisix/runner tests
+
+
+.PHONY: install
+install: clean
+	python3 setup.py install --force
+
+
+.PHONY: lint
+lint: clean
+	flake8 --version || python3 -m pip install flake8
+	flake8 . --count --select=E9,F63,F7,F82 --show-source
+	flake8 . --count --max-complexity=15 --max-line-length=120
+
+
+.PHONY: clean
+clean:
+	rm -rf apache_apisix.egg-info dist build .coverage
+	find . -name "__pycache__" -exec rm -r {} +
+	find . -name ".pytest_cache" -exec rm -r {} +
+	find . -name "*.pyc" -exec rm -r {} +
+
+
