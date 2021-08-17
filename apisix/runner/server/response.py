@@ -50,10 +50,9 @@ class Response:
             response handler
         :return:
         """
-        return self.code == response.code and \
-               self.message == response.message and \
-               self.data == response.data and \
-               self.type == response.type
+        return (
+                self.code == response.code and self.message == response.message and self.data == response.data and
+                self.type == response.type)
 
     @property
     def code(self) -> int:
