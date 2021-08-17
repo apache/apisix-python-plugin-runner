@@ -15,7 +15,18 @@
 # limitations under the License.
 #
 
-import os
-import sys
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: Apache Software Foundation
 
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+  paths-ignore:
+    - '.gitignore'
+    - '.pytest_cache/**'
+    - 'LICENSE'
+    - 'NOTICE'
+    - 'pytest.ini'
+    - '**/__pycache__/**'
+    - '**/images/**'
+
+  comment: on-failure

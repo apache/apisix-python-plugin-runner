@@ -19,8 +19,9 @@
 
 # Python Plugin Runner for Apache APISIX
 
-[![Build Status](https://github.com/apache/apisix-python-plugin-runner/actions/workflows/runner-test.yml/badge.svg?branch=master)](https://github.com/apache/apisix-python-plugin-runner/actions)
-[![Build Status](https://github.com/apache/apisix-python-plugin-runner/actions/workflows/runner-lint.yml/badge.svg?branch=master)](https://github.com/apache/apisix-python-plugin-runner/actions)
+[![Runner Unit Test](https://github.com/apache/apisix-python-plugin-runner/actions/workflows/runner-test.yml/badge.svg?branch=master)](https://github.com/apache/apisix-python-plugin-runner/actions)
+[![Runner Lint Checker](https://github.com/apache/apisix-python-plugin-runner/actions/workflows/runner-lint.yml/badge.svg?branch=master)](https://github.com/apache/apisix-python-plugin-runner/actions)
+[![Runner License Checker](https://github.com/apache/apisix-python-plugin-runner/actions/workflows/runner-license.yml/badge.svg?branch=master)](https://github.com/apache/apisix-python-plugin-runner/actions)
 
 Runs [Apache APISIX](http://apisix.apache.org/) plugins written in Python. Implemented as a sidecar that accompanies
 APISIX.
