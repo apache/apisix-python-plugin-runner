@@ -21,7 +21,6 @@ from apisix.runner.server.config import Config as NewServerConfig
 
 def test_config():
     config = NewServerConfig()
-    assert config.logging.level == logging.DEBUG
 
     config.logging.level = "INFO"
     assert config.logging.level == logging.INFO
@@ -34,8 +33,6 @@ def test_config():
 
     config.logging.level = "NOTSET"
     assert config.logging.level == logging.NOTSET
-
-    assert config.socket.file == "/tmp/runner.sock"
 
     config.socket.file = "/test/runner.sock"
     assert config.socket.file == "/test/runner.sock"
