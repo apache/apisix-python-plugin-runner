@@ -46,3 +46,7 @@ clean:
 	find . -name "*.pyc" -exec rm -r {} +
 
 
+.PHONY: dev
+dev:
+	export PYTHONPATH=$PYTHONPATH:$PWD
+	python3 apisix/main.py start

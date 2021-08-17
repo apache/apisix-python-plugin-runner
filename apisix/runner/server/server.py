@@ -14,29 +14,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import os
 import socket
+
 from threading import Thread as NewThread
 from apisix.runner.server.handle import Handle as NewServerHandle
 from apisix.runner.server.protocol import Protocol as NewServerProtocol
+from apisix.runner.server.config import Config as NewServerConfig
+from apisix.runner.server.logger import Logger as NewServerLogger
+from apisix.runner.server.response import RESP_STATUS_CODE_OK
+
+logger = NewServerLogger()
 
 
-def _threaded(conn: socket, debug: bool):
+def _threaded(conn: socket):
     while True:
         buffer = conn.recv(4)
         protocol = NewServerProtocol(buffer, 0)
         err = protocol.decode()
-        if err.code != 200:
-            print(err.message)
+        if err.code != RESP_STATUS_CODE_OK:
+            logger.error(err.message)
             break
+
+        logger.info("request type:{}, len:{}", protocol.type, protocol.length)
 
         buffer = conn.recv(protocol.length)
         handler = NewServerHandle(protocol.type, buffer)
         response = handler.dispatch()
+        if response.code != RESP_STATUS_CODE_OK:
+            logger.error(response.message)
 
         protocol = NewServerProtocol(response.data, response.type)
         protocol.encode()
         response = protocol.buffer
+
+        logger.info("response type:{}, len:{}", protocol.type, protocol.length)
 
         err = conn.sendall(response)
         if err:
@@ -47,21 +60,22 @@ def _threaded(conn: socket, debug: bool):
 
 
 class Server:
-    def __init__(self, fd: str, debug: bool = False):
-        self.fd = fd.replace("unix:", "")
-        self.debug = debug
+    def __init__(self, config: NewServerConfig):
+        self.fd = config.socket.file
         if os.path.exists(self.fd):
             os.remove(self.fd)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.bind(self.fd)
         self.sock.listen(1024)
+
+        logger.set_level(config.logging.level)
         print("listening on unix:%s" % self.fd)
 
     def receive(self):
         while True:
             conn, address = self.sock.accept()
 
-            NewThread(target=_threaded, args=(conn, self.debug)).start()
+            NewThread(target=_threaded, args=(conn,)).start()
 
     def __del__(self):
         self.sock.close()

@@ -17,26 +17,39 @@
 
 from a6pluginproto.Err import Code as A6ErrCode
 
-RUNNER_SUCCESS_CODE = 200
-RUNNER_SUCCESS_MESSAGE = "OK"
-RUNNER_ERROR_CODE = 500
-RUNNER_ERROR_MESSAGE = "ERR"
-
-errorCodes = [
-    A6ErrCode.Code.CONF_TOKEN_NOT_FOUND,
-    A6ErrCode.Code.BAD_REQUEST,
-    A6ErrCode.Code.SERVICE_UNAVAILABLE,
-]
+RESP_STATUS_CODE_OK = 200
+RESP_STATUS_MESSAGE_OK = "OK"
+RESP_STATUS_CODE_BAD_REQUEST = A6ErrCode.Code.BAD_REQUEST
+RESP_STATUS_MESSAGE_BAD_REQUEST = "Bad Request"
+RESP_STATUS_CODE_SERVICE_UNAVAILABLE = A6ErrCode.Code.BAD_REQUEST
+RESP_STATUS_CODE_CONF_TOKEN_NOT_FOUND = A6ErrCode.Code.SERVICE_UNAVAILABLE
 
 
 class Response:
     def __init__(self, code: int = 0, message: str = '', data: bytes = b'', ty: int = 0):
+        """
+        init response handler
+        :param code:
+            response code
+        :param message:
+            response message
+        :param data:
+            response data
+        :param ty:
+            response type
+        """
         self.__code = code
         self.__message = message
         self.__type = ty
         self.__data = data
 
     def __eq__(self, response) -> bool:
+        """
+        compare response handler
+        :param response:
+            response handler
+        :return:
+        """
         return self.code == response.code and \
                self.message == response.message and \
                self.data == response.data and \
@@ -44,16 +57,32 @@ class Response:
 
     @property
     def code(self) -> int:
+        """
+        get code by response handler
+        :return:
+        """
         return self.__code
 
     @property
     def message(self) -> str:
+        """
+        get message by response handler
+        :return:
+        """
         return self.__message
 
     @property
     def data(self) -> bytes:
+        """
+        get data by response handler
+        :return:
+        """
         return self.__data
 
     @property
     def type(self) -> int:
+        """
+        get type by response handler
+        :return:
+        """
         return self.__type

@@ -15,15 +15,18 @@
 # limitations under the License.
 #
 
-from a6pluginproto.Err import Code as A6ErrCode
 import apisix.runner.plugin.core as RunnerPlugin
 import apisix.runner.plugin.cache as RunnerCache
 from apisix.runner.http.response import Response as NewHttpResponse
 from apisix.runner.http.response import RESP_MAX_DATA_SIZE
 from apisix.runner.http.request import Request as NewHttpRequest
 from apisix.runner.server.response import Response as NewServerResponse
-from apisix.runner.server.response import RUNNER_SUCCESS_CODE
-from apisix.runner.server.response import RUNNER_SUCCESS_MESSAGE
+from apisix.runner.server.response import RESP_STATUS_CODE_OK
+from apisix.runner.server.response import RESP_STATUS_MESSAGE_OK
+from apisix.runner.server.response import RESP_STATUS_CODE_BAD_REQUEST
+from apisix.runner.server.response import RESP_STATUS_MESSAGE_BAD_REQUEST
+from apisix.runner.server.response import RESP_STATUS_CODE_CONF_TOKEN_NOT_FOUND
+from apisix.runner.server.response import RESP_STATUS_CODE_SERVICE_UNAVAILABLE
 from apisix.runner.http.protocol import RPC_PREPARE_CONF
 from apisix.runner.http.protocol import RPC_HTTP_REQ_CALL
 from apisix.runner.http.protocol import RPC_UNKNOWN
@@ -79,13 +82,14 @@ class Handle:
         # cache plugins config
         ok = RunnerCache.set_config_by_token(token, configs)
         if not ok:
-            return NewServerResponse(code=A6ErrCode.Code.SERVICE_UNAVAILABLE, message="cache token failure")
+            return NewServerResponse(code=RESP_STATUS_CODE_SERVICE_UNAVAILABLE,
+                                     message="token `%d` cache setting failed" % token)
         # init response
         resp = NewHttpResponse(RPC_PREPARE_CONF)
         resp.token = token
         response = resp.flatbuffers()
 
-        return NewServerResponse(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE, data=response.Output(),
+        return NewServerResponse(code=RESP_STATUS_CODE_OK, message=RESP_STATUS_MESSAGE_OK, data=response.Output(),
                                  ty=self.type)
 
     def _rpc_call(self) -> NewServerResponse:
@@ -96,22 +100,24 @@ class Handle:
         # get plugins
         configs = RunnerCache.get_config_by_token(token)
         if len(configs) == 0:
-            return NewServerResponse(code=A6ErrCode.Code.CONF_TOKEN_NOT_FOUND, message="cache token not found")
+            return NewServerResponse(code=RESP_STATUS_CODE_CONF_TOKEN_NOT_FOUND,
+                                     message="token `%d` cache acquisition failed" % token)
         # init response
         resp = NewHttpResponse(RPC_HTTP_REQ_CALL)
         # execute plugins
-        RunnerPlugin.filter(configs, req, resp)
+        (code, message) = RunnerPlugin.execute(configs, req, resp)
 
         response = resp.flatbuffers()
-        return NewServerResponse(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE, data=response.Output(),
+        return NewServerResponse(code=code, message=message, data=response.Output(),
                                  ty=self.type)
 
     @staticmethod
-    def _rpc_unknown(err_code: int = 0) -> NewServerResponse:
+    def _rpc_unknown(err_code: int = RESP_STATUS_CODE_BAD_REQUEST,
+                     err_message: str = RESP_STATUS_MESSAGE_BAD_REQUEST) -> NewServerResponse:
         resp = NewHttpResponse(RPC_UNKNOWN)
         resp.error_code = err_code
         response = resp.flatbuffers()
-        return NewServerResponse(code=RUNNER_SUCCESS_CODE, message="OK", data=response.Output(),
+        return NewServerResponse(code=err_code, message=err_message, data=response.Output(),
                                  ty=RPC_UNKNOWN)
 
     def dispatch(self) -> NewServerResponse:
@@ -127,11 +133,10 @@ class Handle:
             return self._rpc_unknown()
 
         size = len(resp.data)
-        if (size > RESP_MAX_DATA_SIZE or size <= 0) and resp.code == 200:
-            resp = NewServerResponse(A6ErrCode.Code.SERVICE_UNAVAILABLE,
-                                     "the max length of data is %d but got %d" % (
+        if (size > RESP_MAX_DATA_SIZE or size <= 0) and resp.code == RESP_STATUS_CODE_OK:
+            resp = NewServerResponse(RESP_STATUS_CODE_SERVICE_UNAVAILABLE,
+                                     "The maximum length of the data is %d, the minimum is 1, but got %d" % (
                                          RESP_MAX_DATA_SIZE, size))
         if resp.code != 200:
-            print("ERR: %s" % resp.message)
-            resp = self._rpc_unknown(resp.code)
+            resp = self._rpc_unknown(resp.code, resp.message)
         return resp

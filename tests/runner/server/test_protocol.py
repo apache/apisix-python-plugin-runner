@@ -17,8 +17,8 @@
 
 from apisix.runner.server.protocol import Protocol as NewServerProtocol
 from apisix.runner.http.protocol import RPC_PREPARE_CONF
-from apisix.runner.server.response import RUNNER_SUCCESS_CODE
-from apisix.runner.server.response import RUNNER_SUCCESS_MESSAGE
+from apisix.runner.server.response import RESP_STATUS_CODE_OK
+from apisix.runner.server.response import RESP_STATUS_MESSAGE_OK
 
 
 def test_protocol_encode():
@@ -30,8 +30,8 @@ def test_protocol_encode():
     buf_arr[0] = RPC_PREPARE_CONF
     buf_data = bytes(buf_arr) + buf_str
     buf_len = len(buf_data)
-    assert err.code == RUNNER_SUCCESS_CODE
-    assert err.message == RUNNER_SUCCESS_MESSAGE
+    assert err.code == RESP_STATUS_CODE_OK
+    assert err.message == RESP_STATUS_MESSAGE_OK
     assert protocol.type == RPC_PREPARE_CONF
     assert protocol.buffer == buf_data
     assert protocol.length == buf_len
@@ -45,7 +45,7 @@ def test_protocol_decode():
     buf_data = bytes(buf_arr)
     protocol = NewServerProtocol(buffer=buf_data)
     err = protocol.decode()
-    assert err.code == RUNNER_SUCCESS_CODE
-    assert err.message == RUNNER_SUCCESS_MESSAGE
+    assert err.code == RESP_STATUS_CODE_OK
+    assert err.message == RESP_STATUS_MESSAGE_OK
     assert protocol.type == RPC_PREPARE_CONF
     assert protocol.length == buf_len

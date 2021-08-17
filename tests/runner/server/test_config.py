@@ -14,31 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import click
 
-from apisix.runner.server.server import Server as NewServer
-from apisix.runner.server.config import Config as NewConfig
-
-RUNNER_VERSION = "0.1.0"
+import logging
+from apisix.runner.server.config import Config as NewServerConfig
 
 
-@click.group()
-@click.version_option(version=RUNNER_VERSION)
-def runner() -> None:
-    pass
+def test_config():
+    config = NewServerConfig()
+    assert config.logging.level == logging.DEBUG
 
+    config.logging.level = "INFO"
+    assert config.logging.level == logging.INFO
 
-@runner.command()
-def start() -> None:
-    config = NewConfig()
-    server = NewServer(config)
-    server.receive()
+    config.logging.level = "ERROR"
+    assert config.logging.level == logging.ERROR
 
+    config.logging.level = "WARN"
+    assert config.logging.level == logging.WARNING
 
-def main() -> None:
-    runner()
+    config.logging.level = "NOTSET"
+    assert config.logging.level == logging.NOTSET
 
+    assert config.socket.file == "/tmp/runner.sock"
 
-if __name__ == '__main__':
-    main()
+    config.socket.file = "/test/runner.sock"
+    assert config.socket.file == "/test/runner.sock"

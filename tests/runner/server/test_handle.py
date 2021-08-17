@@ -20,8 +20,11 @@ from apisix.runner.http.protocol import RPC_PREPARE_CONF
 from apisix.runner.http.protocol import RPC_HTTP_REQ_CALL
 from apisix.runner.http.protocol import RPC_UNKNOWN
 from apisix.runner.http.protocol import new_builder
-from apisix.runner.server.response import RUNNER_SUCCESS_CODE
-from apisix.runner.server.response import RUNNER_SUCCESS_MESSAGE
+from apisix.runner.server.response import RESP_STATUS_CODE_OK
+from apisix.runner.server.response import RESP_STATUS_MESSAGE_OK
+from apisix.runner.server.response import RESP_STATUS_CODE_BAD_REQUEST
+from apisix.runner.server.response import RESP_STATUS_MESSAGE_BAD_REQUEST
+from apisix.runner.server.response import RESP_STATUS_CODE_CONF_TOKEN_NOT_FOUND
 from a6pluginproto.HTTPReqCall import Req as A6HTTPReqCallReq
 from a6pluginproto.PrepareConf import Req as A6PrepareConfReq
 from a6pluginproto.PrepareConf import Resp as A6PrepareConfResp
@@ -71,8 +74,8 @@ def test_dispatch_config():
     handle = NewServerHandle(ty=RPC_PREPARE_CONF, buf=buf)
     response = handle.dispatch()
     resp = A6PrepareConfResp.Resp.GetRootAs(response.data)
-    assert response.code == RUNNER_SUCCESS_CODE
-    assert response.message == RUNNER_SUCCESS_MESSAGE
+    assert response.code == RESP_STATUS_CODE_OK
+    assert response.message == RESP_STATUS_MESSAGE_OK
     assert response.type == RPC_PREPARE_CONF
     assert resp.ConfToken() != 0
 
@@ -118,14 +121,13 @@ def test_dispatch_call():
 
     handle = NewServerHandle(ty=RPC_HTTP_REQ_CALL, buf=buf)
     response = handle.dispatch()
-    assert response.code == RUNNER_SUCCESS_CODE
-    assert response.message == RUNNER_SUCCESS_MESSAGE
+    assert response.code == RESP_STATUS_CODE_CONF_TOKEN_NOT_FOUND
     assert response.type == RPC_UNKNOWN
 
 
 def test_dispatch_unknown():
     handle = NewServerHandle(ty=RPC_UNKNOWN)
     response = handle.dispatch()
-    assert response.code == RUNNER_SUCCESS_CODE
-    assert response.message == RUNNER_SUCCESS_MESSAGE
+    assert response.code == RESP_STATUS_CODE_BAD_REQUEST
+    assert response.message == RESP_STATUS_MESSAGE_BAD_REQUEST
     assert response.type == RPC_UNKNOWN

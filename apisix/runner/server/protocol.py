@@ -15,9 +15,9 @@
 # limitations under the License.
 #
 from apisix.runner.server.response import Response as NewServerResponse
-from apisix.runner.server.response import RUNNER_ERROR_CODE
-from apisix.runner.server.response import RUNNER_SUCCESS_CODE
-from apisix.runner.server.response import RUNNER_SUCCESS_MESSAGE
+from apisix.runner.server.response import RESP_STATUS_CODE_OK
+from apisix.runner.server.response import RESP_STATUS_MESSAGE_OK
+from apisix.runner.server.response import RESP_STATUS_CODE_BAD_REQUEST
 
 
 class Protocol:
@@ -57,7 +57,7 @@ class Protocol:
         :return:
         """
         if len(self.__buffer) == 0:
-            return NewServerResponse(RUNNER_ERROR_CODE, "ERR: send buffer is empty")
+            return NewServerResponse(RESP_STATUS_CODE_BAD_REQUEST, "send buffer is empty")
         response_len = len(self.__buffer)
         response_header = response_len.to_bytes(4, byteorder="big")
         response_header = bytearray(response_header)
@@ -65,7 +65,7 @@ class Protocol:
         response_header = bytes(response_header)
         self.__buffer = response_header + self.__buffer
         self.__length = len(self.__buffer)
-        return NewServerResponse(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE)
+        return NewServerResponse(code=RESP_STATUS_CODE_OK, message=RESP_STATUS_MESSAGE_OK)
 
     def decode(self) -> NewServerResponse:
         """
@@ -73,14 +73,14 @@ class Protocol:
         :return:
         """
         if len(self.__buffer) == 0:
-            return NewServerResponse(RUNNER_ERROR_CODE, "ERR: recv buffer is empty")
+            return NewServerResponse(RESP_STATUS_CODE_BAD_REQUEST, "recv buffer is empty")
         length = len(self.__buffer)
         if length != 4:
-            return NewServerResponse(RUNNER_ERROR_CODE,
-                                     "ERR: recv protocol type length is 4, got %d" % length)
+            return NewServerResponse(RESP_STATUS_CODE_BAD_REQUEST,
+                                     "recv protocol type length is 4, got %d" % length)
 
         buf = bytearray(self.__buffer)
         self.__type = buf[0]
         buf[0] = 0
         self.__length = int.from_bytes(buf, byteorder="big")
-        return NewServerResponse(code=RUNNER_SUCCESS_CODE, message=RUNNER_SUCCESS_MESSAGE)
+        return NewServerResponse(code=RESP_STATUS_CODE_OK, message=RESP_STATUS_MESSAGE_OK)
