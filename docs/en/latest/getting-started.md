@@ -73,7 +73,18 @@ apisix:
       key: edd1c9f034335f136f87ad84b625c8f1
       role: admin
 ext-plugin:
-  cmd: [ "python3", "/path/to/apache/apisix-python-plugin-runner/apisix/main.py", "start" ]
+  cmd: [ "python3", "/path/to/apisix-python-plugin-runner/apisix/main.py", "start" ]
+```
+
+### Log level and socket configuration (Optional)
+
+```bash
+$ vim /path/to/apisix-python-plugin-runner/apisix/config.yaml
+socket:
+  file: $env.APISIX_LISTEN_ADDRESS # Environment variable or absolute path
+
+logging:
+  level: debug # error warn info debug
 ```
 
 ### Start or Restart APISIX

@@ -16,7 +16,7 @@
 #
 
 socket:
-  file: $env.APISIX_LISTEN_ADDRESS
+  file: $env.APISIX_LISTEN_ADDRESS # Environment variable or absolute path
 
 logging:
-  level: debug
+  level: error # error warn info debug
