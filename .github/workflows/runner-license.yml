@@ -28,7 +28,7 @@ on:
       - master
 
 jobs:
-  check-license:
+  Run:
     runs-on: ubuntu-latest
 
     steps:
