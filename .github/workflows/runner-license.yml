@@ -17,7 +17,7 @@
 # under the License.
 #
 
-name: Runner Lint Checker
+name: Runner License Checker
 
 on:
   push:
@@ -26,17 +26,14 @@ on:
   pull_request:
     branches:
       - master
+
 jobs:
   Run:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout source codes
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
-      - name: Lint codes
-        run: make lint
+      - uses: actions/checkout@v2
+      - name: Check License Header
+        uses: apache/skywalking-eyes@v0.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
