@@ -14,30 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import click
 
-from apisix.runner.server.server import Server as NewServer
-from apisix.runner.server.config import Config as NewConfig
+import logging
 
-RUNNER_VERSION = "0.1.0"
+from apisix.runner.server.logger import Logger as NewServerLogger
 
 
-@click.group()
-@click.version_option(version=RUNNER_VERSION)
-def runner() -> None:
-    pass
-
-
-@runner.command()
-def start() -> None:
-    config = NewConfig()
-    server = NewServer(config)
-    server.receive()
-
-
-def main() -> None:
-    runner()
-
-
-if __name__ == '__main__':
-    main()
+def test_logger(capsys):
+    logger = NewServerLogger(logging.DEBUG)
+    logger.error("test error log")
+    logger.warn("test warn log")
+    logger.info("test info log")
+    logger.debug("test debug log")
+    captured = capsys.readouterr()
+    assert captured.out.find("test error log") != -1
+    assert captured.out.find("test warn log") != -1
+    assert captured.out.find("test info log") != -1
+    assert captured.out.find("test debug log") != -1

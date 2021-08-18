@@ -17,18 +17,22 @@
 import os
 import importlib
 from pkgutil import iter_modules
+from typing import Tuple
+from apisix.runner.server.response import RESP_STATUS_CODE_OK
+from apisix.runner.server.response import RESP_STATUS_MESSAGE_OK
+from apisix.runner.server.response import RESP_STATUS_CODE_SERVICE_UNAVAILABLE
 
 
-def filter(configs: dict, request, response) -> None:
+def execute(configs: dict, request, response) -> Tuple[int, str]:
     for name in configs:
         plugin = configs.get(name)
         if not plugin:
-            print("ERR: plugin `%s` undefined." % name)
-            continue
+            return RESP_STATUS_CODE_SERVICE_UNAVAILABLE, "plugin `%s` undefined" % name
         try:
             plugin.filter(request, response)
-        finally:
-            print("ERR: plugin `%s` filter execute failure" % name)
+        except AttributeError:
+            return RESP_STATUS_CODE_SERVICE_UNAVAILABLE, "plugin `%s` object has no attribute `filter`" % name
+    return RESP_STATUS_CODE_OK, RESP_STATUS_MESSAGE_OK
 
 
 def loading() -> dict:
