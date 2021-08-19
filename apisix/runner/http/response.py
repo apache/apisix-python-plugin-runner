@@ -31,7 +31,7 @@ RESP_MAX_DATA_SIZE = 2 << 24 - 1
 
 class Response:
 
-    def __init__(self, ty: int):
+    def __init__(self, ty: int = 0):
         """
         Init and parse request
         :param ty:

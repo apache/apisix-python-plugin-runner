@@ -17,9 +17,6 @@
 # under the License.
 #
 
-.idea
-.vscode
-.DS_Store
-.coverage
-.pytest_cache/
-**/__pycache__/
+[run]
+omit =
+    */__init__.py
