@@ -22,10 +22,12 @@ header:
 
   paths-ignore:
     - '.gitignore'
-    - '.pytest_cache/**'
+    - '.coverage'
+    - '.coveragerc'
     - 'LICENSE'
     - 'NOTICE'
     - 'pytest.ini'
+    - '.pytest_cache/**'
     - '**/__pycache__/**'
     - '**/images/**'
 

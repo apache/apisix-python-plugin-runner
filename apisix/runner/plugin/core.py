@@ -21,17 +21,21 @@ from typing import Tuple
 from apisix.runner.server.response import RESP_STATUS_CODE_OK
 from apisix.runner.server.response import RESP_STATUS_MESSAGE_OK
 from apisix.runner.server.response import RESP_STATUS_CODE_SERVICE_UNAVAILABLE
+from apisix.runner.server.response import RESP_STATUS_CODE_BAD_REQUEST
 
 
 def execute(configs: dict, request, response) -> Tuple[int, str]:
     for name in configs:
         plugin = configs.get(name)
-        if not plugin:
-            return RESP_STATUS_CODE_SERVICE_UNAVAILABLE, "plugin `%s` undefined" % name
+        if type(plugin).__name__.lower() != name.lower():
+            return RESP_STATUS_CODE_BAD_REQUEST, "execute plugin `%s`, plugin handler is not object" % name
+
         try:
             plugin.filter(request, response)
-        except AttributeError:
-            return RESP_STATUS_CODE_SERVICE_UNAVAILABLE, "plugin `%s` object has no attribute `filter`" % name
+        except AttributeError as e:
+            return RESP_STATUS_CODE_SERVICE_UNAVAILABLE, "execute plugin `%s`, %s" % (name, e.args.__str__())
+        except TypeError as e:
+            return RESP_STATUS_CODE_BAD_REQUEST, "execute plugin `%s`, %s" % (name, e.args.__str__())
     return RESP_STATUS_CODE_OK, RESP_STATUS_MESSAGE_OK
 
 
