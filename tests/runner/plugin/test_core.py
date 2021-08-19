@@ -26,6 +26,18 @@ from apisix.runner.server.response import RESP_STATUS_CODE_SERVICE_UNAVAILABLE
 from apisix.runner.server.response import RESP_STATUS_CODE_BAD_REQUEST
 
 
+class Test:
+    """
+    test plugin
+    """
+    def filter(self):
+        """
+        test plugin handler
+        :return:
+        """
+        pass
+
+
 def test_loading():
     configs = plugin_loading()
     assert isinstance(configs, dict)
@@ -46,6 +58,6 @@ def test_execute():
     assert code == RESP_STATUS_CODE_OK
     (code, _) = plugin_execute(configs, request, None)
     assert code == RESP_STATUS_CODE_SERVICE_UNAVAILABLE
-    configs["hello"] = "hello"
+    configs["test"] = Test()
     (code, _) = plugin_execute(configs, request, response)
     assert code == RESP_STATUS_CODE_BAD_REQUEST
