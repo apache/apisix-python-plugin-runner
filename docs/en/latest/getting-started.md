@@ -102,7 +102,7 @@ $ curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f
   "plugins": {
     "ext-plugin-pre-req": {
       "conf": [
-        { "name": "say", "value":"{\"body\":\"hello\"}"}
+        { "name": "stop", "value":"{\"body\":\"hello\"}"}
       ]
     }
   },

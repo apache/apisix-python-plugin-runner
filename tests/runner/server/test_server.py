@@ -15,30 +15,14 @@
 # limitations under the License.
 #
 
-import click
-
 from apisix.runner.server.server import Server as NewServer
 from apisix.runner.server.config import Config as NewConfig
 
-RUNNER_VERSION = "0.1.0"
 
-
-@click.group()
-@click.version_option(version=RUNNER_VERSION)
-def runner() -> None:
-    pass
-
-
-@runner.command()
-def start() -> None:
+def test_server(capsys):
     config = NewConfig()
     server = NewServer(config)
-    server.receive()
-
-
-def main() -> None:
-    runner()
-
-
-if __name__ == '__main__':
-    main()
+    del server
+    captured = capsys.readouterr()
+    assert captured.out.find("listening on unix") != -1
+    assert captured.out.find("Bye") != -1

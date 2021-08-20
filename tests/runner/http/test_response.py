@@ -51,49 +51,58 @@ def test_response_call():
     resp = NewHttpResponse(ty=RPC_HTTP_REQ_CALL)
     resp.headers = headers
     resp.body = body
+    resp.action_type = HTTPReqCallAction.Stop
     response = resp.flatbuffers()
     flat_resp = HTTPReqCallResp.GetRootAs(response.Output())
     assert resp.changed()
-    if flat_resp.ActionType() == HTTPReqCallAction.Stop:
-        action = flat_resp.Action()
-        stop = HTTPReqCallStop()
-        stop.Init(action.Bytes, action.Pos)
-        body_list = []
-        body_len = stop.BodyLength()
-        for i in range(body_len):
-            body_list.append(chr(stop.Body(i)))
-        assert "".join(body_list) == body
-        header_dict = {}
-        header_len = stop.HeadersLength()
-        for j in range(header_len):
-            entry = stop.Headers(j)
-            hk = str(entry.Name(), encoding="utf-8")
-            hv = str(entry.Value(), encoding="utf-8")
-            header_dict[hk] = hv
-        assert header_dict.get("X-TEST-HELLO") == headers.get("X-TEST-HELLO")
-        assert header_dict.get("X-TEST-WORLD") == headers.get("X-TEST-WORLD")
-    if flat_resp.ActionType() == HTTPReqCallAction.Rewrite:
-        action = flat_resp.Action()
-        rewrite = HTTPReqCallRewrite()
-        rewrite.Init(action.Bytes, action.Pos)
-        args_dict = {}
-        args_len = rewrite.ArgsLength()
-        for k in range(args_len):
-            entry = rewrite.Args(k)
-            ak = str(entry.Name(), encoding="utf-8")
-            av = str(entry.Value(), encoding="utf-8")
-            args_dict[ak] = av
-        assert args_dict.get("A-TEST-HELLO") == args.get("A-TEST-HELLO")
-        assert args_dict.get("A-TEST-WORLD") == args.get("A-TEST-WORLD")
-        header_dict = {}
-        header_len = rewrite.HeadersLength()
-        for j in range(header_len):
-            entry = rewrite.Headers(j)
-            hk = str(entry.Name(), encoding="utf-8")
-            hv = str(entry.Value(), encoding="utf-8")
-            header_dict[hk] = hv
-        assert header_dict.get("X-TEST-HELLO") == headers.get("X-TEST-HELLO")
-        assert header_dict.get("X-TEST-WORLD") == headers.get("X-TEST-WORLD")
+    assert flat_resp.ActionType() == HTTPReqCallAction.Stop
+    action = flat_resp.Action()
+    stop = HTTPReqCallStop()
+    stop.Init(action.Bytes, action.Pos)
+    body_list = []
+    body_len = stop.BodyLength()
+    for i in range(body_len):
+        body_list.append(chr(stop.Body(i)))
+    assert "".join(body_list) == body
+    header_dict = {}
+    header_len = stop.HeadersLength()
+    for j in range(header_len):
+        entry = stop.Headers(j)
+        hk = str(entry.Name(), encoding="utf-8")
+        hv = str(entry.Value(), encoding="utf-8")
+        header_dict[hk] = hv
+    assert header_dict.get("X-TEST-HELLO") == headers.get("X-TEST-HELLO")
+    assert header_dict.get("X-TEST-WORLD") == headers.get("X-TEST-WORLD")
+
+    resp = NewHttpResponse(ty=RPC_HTTP_REQ_CALL)
+    resp.headers = headers
+    resp.args = args
+    resp.action_type = HTTPReqCallAction.Rewrite
+    response = resp.flatbuffers()
+    flat_resp = HTTPReqCallResp.GetRootAs(response.Output())
+    assert resp.changed()
+    assert flat_resp.ActionType() == HTTPReqCallAction.Rewrite
+    action = flat_resp.Action()
+    rewrite = HTTPReqCallRewrite()
+    rewrite.Init(action.Bytes, action.Pos)
+    args_dict = {}
+    args_len = rewrite.ArgsLength()
+    for k in range(args_len):
+        entry = rewrite.Args(k)
+        ak = str(entry.Name(), encoding="utf-8")
+        av = str(entry.Value(), encoding="utf-8")
+        args_dict[ak] = av
+    assert args_dict.get("A-TEST-HELLO") == args.get("A-TEST-HELLO")
+    assert args_dict.get("A-TEST-WORLD") == args.get("A-TEST-WORLD")
+    header_dict = {}
+    header_len = rewrite.HeadersLength()
+    for j in range(header_len):
+        entry = rewrite.Headers(j)
+        hk = str(entry.Name(), encoding="utf-8")
+        hv = str(entry.Value(), encoding="utf-8")
+        header_dict[hk] = hv
+    assert header_dict.get("X-TEST-HELLO") == headers.get("X-TEST-HELLO")
+    assert header_dict.get("X-TEST-WORLD") == headers.get("X-TEST-WORLD")
 
 
 def test_response_unknown():
