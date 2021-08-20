@@ -303,7 +303,7 @@ class Response:
             headers_vector = builder.EndVector()
 
             path = b'/'
-            if self.body and len(self.body) > 0:
+            if self.path and len(self.path) > 0:
                 path = self.path.encode(encoding="UTF-8")
             path_vector = builder.CreateByteVector(path)
 

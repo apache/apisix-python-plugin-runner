@@ -51,6 +51,7 @@ def test_response_call():
     resp = NewHttpResponse(ty=RPC_HTTP_REQ_CALL)
     resp.headers = headers
     resp.body = body
+    resp.status_code = 200
     resp.action_type = HTTPReqCallAction.Stop
     response = resp.flatbuffers()
     flat_resp = HTTPReqCallResp.GetRootAs(response.Output())
@@ -73,10 +74,12 @@ def test_response_call():
         header_dict[hk] = hv
     assert header_dict.get("X-TEST-HELLO") == headers.get("X-TEST-HELLO")
     assert header_dict.get("X-TEST-WORLD") == headers.get("X-TEST-WORLD")
+    assert stop.Status() == resp.status_code
 
     resp = NewHttpResponse(ty=RPC_HTTP_REQ_CALL)
     resp.headers = headers
     resp.args = args
+    resp.path = "/hello/runner"
     resp.action_type = HTTPReqCallAction.Rewrite
     response = resp.flatbuffers()
     flat_resp = HTTPReqCallResp.GetRootAs(response.Output())
@@ -103,6 +106,7 @@ def test_response_call():
         header_dict[hk] = hv
     assert header_dict.get("X-TEST-HELLO") == headers.get("X-TEST-HELLO")
     assert header_dict.get("X-TEST-WORLD") == headers.get("X-TEST-WORLD")
+    assert rewrite.Path().decode(encoding="UTF-8") == resp.path
 
 
 def test_response_unknown():
@@ -111,3 +115,38 @@ def test_response_unknown():
     response = resp.flatbuffers()
     flat_resp = A6ErrResp.GetRootAs(response.Output())
     assert flat_resp.Code() == A6ErrCode.BAD_REQUEST
+
+
+def test_response_handler():
+    resp = NewHttpResponse()
+    resp.rpc_type = RPC_UNKNOWN
+    assert resp.rpc_type == RPC_UNKNOWN
+    resp.token = 1000
+    assert resp.token == 1000
+    resp.headers = {"X-HELLO": "Python"}
+    assert resp.headers == {"X-HELLO": "Python"}
+    resp.body = "Hello, Python"
+    assert resp.body == "Hello, Python"
+    resp.args = {"hello": "Python"}
+    assert resp.args == {"hello": "Python"}
+    resp.path = "/hello"
+    assert resp.path == "/hello"
+    resp.id = 1000
+    assert resp.id == 1000
+    resp.status_code = 200
+    assert resp.status_code == 200
+    resp.error_code = 1
+    assert resp.error_code == 1
+    resp.action_type = 10
+    assert resp.action_type == 10
+    resp.reset()
+    assert resp.rpc_type == 0
+    assert resp.id == 0
+    assert resp.token == 0
+    assert resp.body == ""
+    assert resp.path == ""
+    assert resp.args == {}
+    assert resp.headers == {}
+    assert resp.status_code == 0
+    assert resp.error_code == 0
+    assert resp.action_type == 0

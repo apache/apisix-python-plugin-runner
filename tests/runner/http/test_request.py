@@ -19,6 +19,7 @@ import flatbuffers
 from apisix.runner.http.request import Request as NewHttpRequest
 from apisix.runner.http.protocol import RPC_PREPARE_CONF
 from apisix.runner.http.protocol import RPC_HTTP_REQ_CALL
+from apisix.runner.http.protocol import RPC_UNKNOWN
 from apisix.runner.http.protocol import new_builder
 from apisix.runner.http.method import get_name_by_code
 from apisix.runner.plugin.core import loading
@@ -95,3 +96,38 @@ def test_request_call():
     assert req.args.get("a") == req_args.get("a")
     assert req.headers.get("h") == req_headers.get("h")
     assert req.method == get_name_by_code(A6Method.Method.GET)
+
+
+def test_request_handler():
+    req = NewHttpRequest()
+    req.id = 1000
+    assert req.id == 1000
+    req.rpc_type = RPC_UNKNOWN
+    assert req.rpc_type == RPC_UNKNOWN
+    req.rpc_buf = b'hello'
+    assert req.rpc_buf == b'hello'
+    req.conf_token = 10
+    assert req.conf_token == 10
+    req.method = "GET"
+    assert req.method == "GET"
+    req.path = "/hello"
+    assert req.path == "/hello"
+    req.headers = {"X-HELLO": "Python"}
+    assert req.headers == {"X-HELLO": "Python"}
+    req.configs = {"hello": "Python"}
+    assert req.configs == {"hello": "Python"}
+    req.args = {"hello": "Python"}
+    assert req.args == {"hello": "Python"}
+    req.src_ip = "127.0.0.1"
+    assert req.src_ip == "127.0.0.1"
+    req.reset()
+    assert req.rpc_type == 0
+    assert req.rpc_buf == b''
+    assert req.id == 0
+    assert req.conf_token == 0
+    assert req.method == ""
+    assert req.path == ""
+    assert req.headers == {}
+    assert req.configs == {}
+    assert req.args == {}
+    assert req.src_ip == ""
