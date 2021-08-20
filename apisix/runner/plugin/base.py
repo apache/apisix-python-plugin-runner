@@ -15,6 +15,10 @@
 # limitations under the License.
 #
 
+from apisix.runner.http.response import PLUGIN_ACTION_REWRITE
+from apisix.runner.http.response import PLUGIN_ACTION_STOP
+
+
 class Base:
     def __init__(self, name: str):
         """
@@ -24,22 +28,72 @@ class Base:
         """
         self._name = name
         self._config = {}
+        self._action = PLUGIN_ACTION_REWRITE
 
     @property
     def name(self) -> str:
+        """
+        get plugin type
+        :return:
+        """
         return self._name
 
     @name.setter
     def name(self, name: str) -> None:
+        """
+        set plugin type
+        :param name:
+        :return:
+        """
         self._name = name
 
     @property
     def config(self) -> dict:
+        """
+        set plugin config
+        :return:
+        """
         return self._config
 
     @config.setter
     def config(self, config: dict) -> None:
+        """
+        get plugin config
+        :param config:
+        :return:
+        """
         if config and isinstance(config, dict):
             self._config = config
         else:
             self._config = {}
+
+    @property
+    def action(self) -> int:
+        """
+        get plugin type
+        :return:
+        """
+        return self._action
+
+    @action.setter
+    def action(self, action: int) -> None:
+        """
+        set plugin type
+        :param action:
+        :return:
+        """
+        self._action = action
+
+    def stop(self) -> None:
+        """
+        Set plugin to `Stop` type
+        :return:
+        """
+        self.action = PLUGIN_ACTION_STOP
+
+    def rewrite(self) -> None:
+        """
+        Set plugin to `Rewrite` type
+        :return:
+        """
+        self.action = PLUGIN_ACTION_REWRITE

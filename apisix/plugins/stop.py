@@ -20,12 +20,37 @@ from apisix.runner.http.request import Request
 from apisix.runner.http.response import Response
 
 
-class Say(Base):
+class Stop(Base):
     def __init__(self):
-        super(Say, self).__init__(self.__class__.__name__)
+        """
+        Example of `stop` type plugin, features:
+            This type of plugin can customize response `body`, `header`, `http_code`
+            This type of plugin will interrupt the request
+        """
+        super(Stop, self).__init__(self.__class__.__name__)
 
     def filter(self, request: Request, response: Response):
+        """
+        The plugin executes the main function
+        :param request:
+            request parameters and information
+        :param response:
+            response parameters and information
+        :return:
+        """
+        # Get plugin configuration information through `self.config`
+        # print(self.config)
+
+        # Set response headers
         headers = request.headers
         headers["X-Resp-A6-Runner"] = "Python"
-        response.body = "Hello, Python Runner of APISIX"
         response.headers = headers
+
+        # Set response body
+        response.body = "Hello, Python Runner of APISIX"
+
+        # Set response status code
+        response.status_code = 201
+
+        # Set plugin to `stop` type, default `rewrite`
+        self.stop()

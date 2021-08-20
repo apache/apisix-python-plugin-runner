@@ -36,6 +36,9 @@ def execute(configs: dict, request, response) -> Tuple[int, str]:
             return RESP_STATUS_CODE_SERVICE_UNAVAILABLE, "execute plugin `%s`, %s" % (name, e.args.__str__())
         except TypeError as e:
             return RESP_STATUS_CODE_BAD_REQUEST, "execute plugin `%s`, %s" % (name, e.args.__str__())
+        else:
+            response.action_type = plugin.action
+
     return RESP_STATUS_CODE_OK, RESP_STATUS_MESSAGE_OK
 
 
