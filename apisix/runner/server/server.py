@@ -28,33 +28,36 @@ from apisix.runner.server.response import RESP_STATUS_CODE_OK
 logger = NewServerLogger()
 
 
-def _threaded(conn: socket):
+def _threaded(conn: socket.socket):
     while True:
-        buffer = conn.recv(4)
-        protocol = NewServerProtocol(buffer, 0)
-        err = protocol.decode()
-        if err.code != RESP_STATUS_CODE_OK:
-            logger.error(err.message)
+        try:
+            buffer = conn.recv(4)
+            protocol = NewServerProtocol(buffer, 0)
+            err = protocol.decode()
+            if err.code != RESP_STATUS_CODE_OK:
+                logger.error(err.message)
+                break
+
+            logger.info("request type:{}, len:{}", protocol.type, protocol.length)
+
+            buffer = conn.recv(protocol.length)
+            handler = NewServerHandle(protocol.type, buffer)
+            response = handler.dispatch()
+            if response.code != RESP_STATUS_CODE_OK:
+                logger.error(response.message)
+
+            protocol = NewServerProtocol(response.data, response.type)
+            protocol.encode()
+
+            logger.info("response type:{}, len:{}", protocol.type, protocol.length)
+
+            conn.sendall(protocol.buffer)
+        except socket.timeout as e:
+            logger.info("connection timout: {}", e.args.__str__())
             break
-
-        logger.info("request type:{}, len:{}", protocol.type, protocol.length)
-
-        buffer = conn.recv(protocol.length)
-        handler = NewServerHandle(protocol.type, buffer)
-        response = handler.dispatch()
-        if response.code != RESP_STATUS_CODE_OK:
-            logger.error(response.message)
-
-        protocol = NewServerProtocol(response.data, response.type)
-        protocol.encode()
-        response = protocol.buffer
-
-        logger.info("response type:{}, len:{}", protocol.type, protocol.length)
-
-        err = conn.sendall(response)
-        if err:
-            print(err)
-        break
+        except socket.error as e:
+            logger.error("connection error: {}", e.args.__str__())
+            break
 
     conn.close()
 
@@ -74,8 +77,11 @@ class Server:
     def receive(self):
         while True:
             conn, address = self.sock.accept()
+            conn.settimeout(60)
 
-            NewThread(target=_threaded, args=(conn,)).start()
+            thread = NewThread(target=_threaded, args=(conn,))
+            thread.setDaemon(True)
+            thread.start()
 
     def __del__(self):
         self.sock.close()
