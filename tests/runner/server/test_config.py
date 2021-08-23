@@ -15,11 +15,12 @@
 # limitations under the License.
 #
 
+import os
 import logging
 from apisix.runner.server.config import Config as NewServerConfig
 
 
-def test_config():
+def test_config_default():
     config = NewServerConfig()
 
     config.logging.level = "INFO"
@@ -33,6 +34,25 @@ def test_config():
 
     config.logging.level = "NOTSET"
     assert config.logging.level == logging.NOTSET
+
+    config.socket.file = "/test/runner.sock"
+    assert config.socket.file == "/test/runner.sock"
+
+
+def test_config_custom():
+    config = NewServerConfig("%s/apisix" % os.path.abspath(os.path.join(os.getcwd())), "config.yaml")
+
+    config.logging.level = "NOTSET"
+    assert config.logging.level == logging.NOTSET
+
+    config.logging.level = "INFO"
+    assert config.logging.level == logging.INFO
+
+    config.logging.level = "ERROR"
+    assert config.logging.level == logging.ERROR
+
+    config.logging.level = "WARN"
+    assert config.logging.level == logging.WARNING
 
     config.socket.file = "/test/runner.sock"
     assert config.socket.file == "/test/runner.sock"
