@@ -79,15 +79,17 @@ class _ConfigLogging:
 
 class Config:
 
-    def __init__(self, config_name: str = "config.yaml"):
+    def __init__(self, config_path: str = "", config_name: str = "config.yaml"):
         """
         init config
+        :param config_path:
+            local config file path
         :param config_name:
             local config file name
         """
         self.socket = _ConfigSocket()
         self.logging = _ConfigLogging()
-        self._loading_config(config_name)
+        self._loading_config(config_path, config_name)
 
     @staticmethod
     def _get_env_config(config: str):
@@ -101,13 +103,17 @@ class Config:
             return os.getenv(env_name)
         return config
 
-    def _loading_config(self, config_name: str):
+    def _loading_config(self, config_path: str, config_name: str):
         """
         load local configuration file
+        :param config_path:
         :param config_name:
         :return:
         """
-        abs_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        if len(config_path) and os.path.exists(config_path):
+            abs_path = config_path
+        else:
+            abs_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         cf_path = "%s/%s" % (abs_path, config_name)
         if not os.path.exists(cf_path):
             print("ERR: config file `%s` not exists" % cf_path)

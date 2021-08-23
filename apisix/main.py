@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+import os
 import click
 
 from apisix.runner.server.server import Server as NewServer
@@ -31,7 +32,7 @@ def runner() -> None:
 
 @runner.command()
 def start() -> None:
-    config = NewConfig()
+    config = NewConfig(os.path.dirname(os.path.abspath(__file__)))
     server = NewServer(config)
     server.receive()
 
