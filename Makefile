@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+VERSION ?= latest
+RELEASE_SRC = apisix-go-plugin-runner-${VERSION}-src
+
 .PHONY: setup
 setup:
 	python3 -m pip install --upgrade pip
@@ -49,3 +52,14 @@ clean:
 .PHONY: dev
 dev:
 	export PYTHONPATH=$(PWD) && python3 apisix/main.py start
+
+
+.PHONY: release
+release:
+	tar -zcvf $(RELEASE_SRC).tgz apisix docs tests *.md LICENSE Makefile NOTICE pytest.ini requirements.txt setup.py
+	gpg --batch --yes --armor --detach-sig $(RELEASE_SRC).tgz
+	shasum -a 512 $(RELEASE_SRC).tgz > $(RELEASE_SRC).tgz.sha512
+	mkdir -p release
+	mv $(RELEASE_SRC).tgz release/$(RELEASE_SRC).tgz
+	mv $(RELEASE_SRC).tgz.asc release/$(RELEASE_SRC).tgz.asc
+	mv $(RELEASE_SRC).tgz.sha512 release/$(RELEASE_SRC).tgz.sha512
