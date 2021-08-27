@@ -15,7 +15,7 @@
 # limitations under the License.
 
 VERSION ?= latest
-RELEASE_SRC = apisix-go-plugin-runner-${VERSION}-src
+RELEASE_SRC = apisix-python-plugin-runner-${VERSION}-src
 
 .PHONY: setup
 setup:
