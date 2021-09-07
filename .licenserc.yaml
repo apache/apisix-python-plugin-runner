@@ -30,5 +30,6 @@ header:
     - '.pytest_cache/**'
     - '**/__pycache__/**'
     - '**/images/**'
+    - '**/config.json'
 
   comment: on-failure
