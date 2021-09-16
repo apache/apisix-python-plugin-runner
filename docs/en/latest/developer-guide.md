@@ -48,7 +48,8 @@ the `.py` files in this directory autoload
 #### Plugin example
 
 ```
-/path/to/apisix-python-plugin-runner/apisix/plugin/say.py
+/path/to/apisix-python-plugin-runner/apisix/plugin/stop.py
+/path/to/apisix-python-plugin-runner/apisix/plugin/rewrite.py
 ```
 
 #### Plugin Format
