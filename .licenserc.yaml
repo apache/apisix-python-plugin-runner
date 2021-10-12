@@ -31,5 +31,6 @@ header:
     - '**/__pycache__/**'
     - '**/images/**'
     - '**/config.json'
+    - '.github/'
 
   comment: on-failure
