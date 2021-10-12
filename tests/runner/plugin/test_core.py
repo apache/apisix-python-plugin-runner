@@ -65,7 +65,7 @@ def test_execute():
     assert code == RESP_STATUS_CODE_BAD_REQUEST
 
 
-def test_update_response():
+def test_refresh_response():
     request = NewHttpRequest()
     request.path = "/hello"
     request.args = {
