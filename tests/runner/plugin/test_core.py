@@ -17,8 +17,10 @@
 
 import os
 from pkgutil import iter_modules
+
 from apisix.runner.plugin.core import loading as plugin_loading
 from apisix.runner.plugin.core import execute as plugin_execute
+from apisix.runner.plugin.core import refresh_response as refresh_response
 from apisix.runner.http.request import Request as NewHttpRequest
 from apisix.runner.http.response import Response as NewHttpResponse
 from apisix.runner.server.response import RESP_STATUS_CODE_OK
@@ -61,3 +63,19 @@ def test_execute():
     configs["test"] = Test()
     (code, _) = plugin_execute(configs, request, response)
     assert code == RESP_STATUS_CODE_BAD_REQUEST
+
+
+def test_refresh_response():
+    request = NewHttpRequest()
+    request.path = "/hello"
+    request.args = {
+        "q": "hello"
+    }
+    request.headers = {
+        "h": "world"
+    }
+    response = NewHttpResponse()
+    refresh_response(request, response)
+    assert request.path == response.path
+    assert request.args == response.args
+    assert request.headers == response.headers
