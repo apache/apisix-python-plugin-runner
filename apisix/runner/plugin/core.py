@@ -38,8 +38,31 @@ def execute(configs: dict, request, response) -> Tuple[int, str]:
             return RESP_STATUS_CODE_BAD_REQUEST, "execute plugin `%s`, %s" % (name, e.args.__str__())
         else:
             response.action_type = plugin.action
+            _update_response_default_value(request, response)
 
     return RESP_STATUS_CODE_OK, RESP_STATUS_MESSAGE_OK
+
+
+def _update_response_default_value(request, response) -> None:
+    # setting default header
+    if len(request.headers) >= 1:
+        for req_hk in request.headers.keys():
+            req_hv = request.headers.get(req_hk)
+            resp_hv = response.headers.get(req_hk)
+            if not resp_hv:
+                response.headers[req_hk] = req_hv
+
+    # setting default path
+    if not response.path or len(response.path) == 0:
+        response.path = request.path
+
+    # setting default args
+    if len(request.args) >= 1:
+        for req_ak in request.headers.keys():
+            req_av = request.headers.get(req_ak)
+            resp_av = response.headers.get(req_ak)
+            if not resp_av:
+                response.headers[req_ak] = req_av
 
 
 def loading() -> dict:

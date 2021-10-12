@@ -50,6 +50,13 @@ def test_loading():
 
 def test_execute():
     request = NewHttpRequest()
+    request.path = "/hello"
+    request.args = {
+        "q": "hello"
+    }
+    request.headers = {
+        "h": "world"
+    }
     response = NewHttpResponse()
     configs = plugin_loading()
     for p_name in configs:
@@ -61,3 +68,6 @@ def test_execute():
     configs["test"] = Test()
     (code, _) = plugin_execute(configs, request, response)
     assert code == RESP_STATUS_CODE_BAD_REQUEST
+    assert request.path == response.path
+    assert request.args == response.args
+    assert request.headers == response.headers
