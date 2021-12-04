@@ -34,7 +34,7 @@ def runner() -> None:
 
 @runner.command()
 def start() -> None:
-    config = NewConfig("%s/conf" % os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    config = NewConfig(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     server = NewServer(config)
     server.receive()
 
