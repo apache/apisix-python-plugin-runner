@@ -27,12 +27,13 @@ This documentation explains how to develop this project.
 
 ## Prerequisites
 
-* Python 3.6+
+* Python 3.7+
 * APISIX 2.7.0
 
 ## Debug
 
-- Run `make setup` Installation dependencies
+- Run `make setup` installation dependencies
+- Run `make install` installation runner to system
 - Run `make dev` to start it
 
 ## Plugin
@@ -76,29 +77,35 @@ class Test(Base):
         # Get plugin configuration information through `self.config`
         # print(self.config)
 
+        # Setting the request object will continue to forward the request
+
+        # Rewrite request headers
+        request.headers["X-Resp-A6-Runner"] = "Python"
+
+        # Rewrite request args
+        request.args["a6_runner"] = "Python"
+
+        # Rewrite request path
+        request.path = "/a6/python/runner"
+
+        # Setting the response object will terminate the request and respond to the data
+
         # Set response headers
-        headers = request.headers
-        headers["X-Resp-A6-Runner"] = "Python"
-        response.headers = headers
+        response.headers["X-Resp-A6-Runner"] = "Python"
 
         # Set response body
         response.body = "Hello, Python Runner of APISIX"
 
         # Set response status code
         response.status_code = 201
-
-        # Set the plug-in to `stop` type, default `rewrite`, use `self.rewrite()` to declare it as `rewrite` type.
-        self.stop()
 ```
 
 - The plugin must inherit the `Base` class
 - The plugin must implement the `filter` function
 - `filter` function parameters can only contain `Request` and `Response` classes as parameters
-- Request parameter can get request information
+- Request parameter can get and set request information
 - Response parameter can set response information
 - `self.config` can get plug-in configuration information
-- Use `self.stop()` to set the plugin as a `stop` type plugin, which will interrupt the request.
-- Use `self.rewrite()` to set the plugin as a `rewrite` type plugin, which will not interrupt the request.
 
 ## Test
 

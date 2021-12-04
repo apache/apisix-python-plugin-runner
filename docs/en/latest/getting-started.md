@@ -26,7 +26,7 @@ This document explains how to use Python Runner
 
 ## Prerequisites
 
-* Python 3.6+
+* Python 3.7+
 * APISIX 2.7.0
 
 
@@ -35,6 +35,7 @@ This document explains how to use Python Runner
 ```bash
 $ git clone https://github.com/apache/apisix-python-plugin-runner.git
 $ cd apisix-python-plugin-runner
+$ make setup
 $ make install
 ```
 
@@ -47,7 +48,7 @@ $ make install
 #### Run APISIX Python Runner
 ```bash
 $ cd /path/to/apisix-python-plugin-runner
-$ APISIX_LISTEN_ADDRESS=unix:/tmp/runner.sock python3 apisix/main.py start
+$ APISIX_LISTEN_ADDRESS=unix:/tmp/runner.sock python3 bin/py-runner start
 ```
 
 #### Modify APISIX configuration file
@@ -79,7 +80,7 @@ ext-plugin:
 ### Log level and socket configuration (Optional)
 
 ```bash
-$ vim /path/to/apisix-python-plugin-runner/apisix/config.yaml
+$ vim /path/to/apisix-python-plugin-runner/conf/config.yaml
 socket:
   file: $env.APISIX_LISTEN_ADDRESS # Environment variable or absolute path
 

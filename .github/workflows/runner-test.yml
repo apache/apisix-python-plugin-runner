@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        python-version: [ 3.7, 3.8, 3.9, 3.10 ]
       fail-fast: false
     steps:
       - name: Checkout source codes
@@ -51,5 +51,5 @@ jobs:
         run: make test
 
       - name: Upload coverage profile
-        if: ${{ matrix.python-version == '3.6' }}
+        if: ${{ matrix.python-version == '3.7' }}
         run: bash <(curl -s https://codecov.io/bash)
