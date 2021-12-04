@@ -14,9 +14,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-socket:
-  file: $env.APISIX_LISTEN_ADDRESS # Environment variable or absolute path
-
-logging:
-  level: warn # error warn info debug

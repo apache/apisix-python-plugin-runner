@@ -15,128 +15,90 @@
 # limitations under the License.
 #
 
-import apisix.runner.plugin.core as RunnerPlugin
-import apisix.runner.plugin.cache as RunnerCache
+import flatbuffers
+import apisix.runner.plugin.core as runner_plugin
+import apisix.runner.plugin.cache as runner_cache
+import apisix.runner.utils.common as runner_utils
 from apisix.runner.http.response import Response as NewHttpResponse
-from apisix.runner.http.response import RESP_MAX_DATA_SIZE
 from apisix.runner.http.request import Request as NewHttpRequest
-from apisix.runner.server.response import Response as NewServerResponse
-from apisix.runner.server.response import RESP_STATUS_CODE_OK
-from apisix.runner.server.response import RESP_STATUS_MESSAGE_OK
-from apisix.runner.server.response import RESP_STATUS_CODE_BAD_REQUEST
-from apisix.runner.server.response import RESP_STATUS_MESSAGE_BAD_REQUEST
-from apisix.runner.server.response import RESP_STATUS_CODE_CONF_TOKEN_NOT_FOUND
-from apisix.runner.server.response import RESP_STATUS_CODE_SERVICE_UNAVAILABLE
-from apisix.runner.http.protocol import RPC_PREPARE_CONF
-from apisix.runner.http.protocol import RPC_HTTP_REQ_CALL
-from apisix.runner.http.protocol import RPC_UNKNOWN
+from A6.Err.Code import Code as ErrCode
 
 
 class Handle:
 
-    def __init__(self, ty: int = 0, buf: bytes = b'', debug: bool = False):
+    def __init__(self, r):
         """
-        Init Python runner server
-        :param ty:
+        Init RPC Handle
+        :param r:
             rpc request protocol type
-        :param buf:
-            rpc request buffer data
-        :param debug:
-            enable debug mode
         """
-        self.type = ty
-        self.buffer = buf
-        self.debug = debug
+        self.r = r
 
-    @property
-    def type(self) -> int:
-        return self._type
+    def dispatch(self) -> flatbuffers.Builder:
+        # init builder
+        builder = runner_utils.new_builder()
+        # parse request
+        req = NewHttpRequest(self.r)
 
-    @type.setter
-    def type(self, ty: int = 0) -> None:
-        self._type = ty
+        if self.r.request.ty == runner_utils.RPC_PREPARE_CONF:
+            # generate token
+            token = runner_cache.generate_token()
+            # get plugins config
+            configs = req.configs
+            # cache plugins config
+            ok = runner_cache.set_config_by_token(token, configs)
+            if ok:
+                req.conf_token = token
+                ok = req.config_handler(builder)
+                if not ok:
+                    self.r.log.error("prepare conf request failure")
+                    req.code = ErrCode.BAD_REQUEST
+                    req.unknown_handler(builder)
+            else:
+                self.r.log.error("token `%d` cache setting failed" % token)
+                req.code = ErrCode.CONF_TOKEN_NOT_FOUND
+                req.unknown_handler(builder)
 
-    @property
-    def buffer(self) -> bytes:
-        return self._buffer
+            return builder
 
-    @buffer.setter
-    def buffer(self, buf: bytes = b'') -> None:
-        self._buffer = buf
+        elif self.r.request.ty == runner_utils.RPC_HTTP_REQ_CALL:
+            # get request token
+            token = req.conf_token
+            # get plugins
+            configs = runner_cache.get_config_by_token(token)
 
-    @property
-    def debug(self) -> bool:
-        return self._debug
+            if len(configs) == 0:
+                self.r.log.error("token `%d` cache acquisition failed" % token)
+                req.code = ErrCode.CONF_TOKEN_NOT_FOUND
+                req.unknown_handler(builder)
+                return builder
 
-    @debug.setter
-    def debug(self, debug: bool = False) -> None:
-        self._debug = debug
+            # init response
+            resp = NewHttpResponse(self.r.request.ty)
+            resp.id = req.id
 
-    def _rpc_config(self) -> NewServerResponse:
-        # init request
-        req = NewHttpRequest(RPC_PREPARE_CONF, self.buffer)
-        # generate token
-        token = RunnerCache.generate_token()
-        # get plugins config
-        configs = req.configs
-        # cache plugins config
-        ok = RunnerCache.set_config_by_token(token, configs)
-        if not ok:
-            return NewServerResponse(code=RESP_STATUS_CODE_SERVICE_UNAVAILABLE,
-                                     message="token `%d` cache setting failed" % token)
-        # init response
-        resp = NewHttpResponse(RPC_PREPARE_CONF)
-        resp.token = token
-        response = resp.flatbuffers()
+            # execute plugins
+            ok = runner_plugin.execute(configs, self.r, req, resp)
+            if not ok:
+                req.code = ErrCode.SERVICE_UNAVAILABLE
+                req.unknown_handler(builder)
+                return builder
 
-        return NewServerResponse(code=RESP_STATUS_CODE_OK, message=RESP_STATUS_MESSAGE_OK, data=response.Output(),
-                                 ty=self.type)
+            ok = resp.call_handler(builder)
+            if ok:
+                return builder
 
-    def _rpc_call(self) -> NewServerResponse:
-        # init request
-        req = NewHttpRequest(RPC_HTTP_REQ_CALL, self.buffer)
-        # get request token
-        token = req.conf_token
-        # get plugins
-        configs = RunnerCache.get_config_by_token(token)
-        if len(configs) == 0:
-            return NewServerResponse(code=RESP_STATUS_CODE_CONF_TOKEN_NOT_FOUND,
-                                     message="token `%d` cache acquisition failed" % token)
-        # init response
-        resp = NewHttpResponse(RPC_HTTP_REQ_CALL)
-        # execute plugins
-        (code, message) = RunnerPlugin.execute(configs, req, resp)
+            ok = req.call_handler(builder)
+            if not ok:
+                self.r.log.error("http request call failure")
+                req.code = ErrCode.BAD_REQUEST
+                req.unknown_handler(builder)
+                return builder
 
-        response = resp.flatbuffers()
-        return NewServerResponse(code=code, message=message, data=response.Output(),
-                                 ty=self.type)
+            return builder
 
-    @staticmethod
-    def _rpc_unknown(err_code: int = RESP_STATUS_CODE_BAD_REQUEST,
-                     err_message: str = RESP_STATUS_MESSAGE_BAD_REQUEST) -> NewServerResponse:
-        resp = NewHttpResponse(RPC_UNKNOWN)
-        resp.error_code = err_code
-        response = resp.flatbuffers()
-        return NewServerResponse(code=err_code, message=err_message, data=response.Output(),
-                                 ty=RPC_UNKNOWN)
-
-    def dispatch(self) -> NewServerResponse:
-        resp = None
-
-        if self.type == RPC_PREPARE_CONF:
-            resp = self._rpc_config()
-
-        if self.type == RPC_HTTP_REQ_CALL:
-            resp = self._rpc_call()
-
-        if not resp:
-            return self._rpc_unknown()
-
-        size = len(resp.data)
-        if (size > RESP_MAX_DATA_SIZE or size <= 0) and resp.code == RESP_STATUS_CODE_OK:
-            resp = NewServerResponse(RESP_STATUS_CODE_SERVICE_UNAVAILABLE,
-                                     "The maximum length of the data is %d, the minimum is 1, but got %d" % (
-                                         RESP_MAX_DATA_SIZE, size))
-        if resp.code != 200:
-            resp = self._rpc_unknown(resp.code, resp.message)
-        return resp
+        else:
+            self.r.log.error("unknown request")
+            req.code = ErrCode.BAD_REQUEST
+            req.unknown_handler(builder)
+            return builder

@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-from a6pluginproto.Err import Code as A6ErrCode
+from A6.Err import Code as A6ErrCode
 
 RESP_STATUS_CODE_OK = 200
 RESP_STATUS_MESSAGE_OK = "OK"

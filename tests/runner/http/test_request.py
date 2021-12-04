@@ -14,96 +14,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import flatbuffers
 
-from apisix.runner.http.request import Request as NewHttpRequest
-from apisix.runner.http.protocol import RPC_PREPARE_CONF
-from apisix.runner.http.protocol import RPC_HTTP_REQ_CALL
-from apisix.runner.http.protocol import RPC_UNKNOWN
-from apisix.runner.http.protocol import new_builder
-from apisix.runner.http.method import get_name_by_code
-from apisix.runner.plugin.core import loading
-from a6pluginproto.HTTPReqCall import Req as A6HTTPReqCallReq
-from a6pluginproto.PrepareConf import Req as A6PrepareConfReq
-from a6pluginproto import TextEntry as A6TextEntry
-from a6pluginproto import Method as A6Method
+import socket
+import logging
+import apisix.runner.utils.common as runner_utils
+from apisix.runner.server.logger import Logger as RunnerServerLogger
+from apisix.runner.server.server import RPCRequest as RunnerRPCRequest
+from apisix.runner.http.request import Request as RunnerHttpRequest
 
 
-def _create_entry(builder: flatbuffers.Builder, name: str, value: str) -> int:
-    name = builder.CreateString(name)
-    value = builder.CreateString(value)
-    A6TextEntry.Start(builder)
-    A6TextEntry.AddName(builder, name)
-    A6TextEntry.AddValue(builder, value)
-    return A6TextEntry.End(builder)
+def default_request():
+    sock = socket.socket()
+    logger = RunnerServerLogger(logging.INFO)
+    return RunnerRPCRequest(sock, logger)
 
 
-def test_request_config():
-    builder = new_builder()
-    plugins = loading()
-    conf_data = 0
-    for name in plugins:
-        conf_data = _create_entry(builder, name, '{"runner":"Python"}')
-        break
-    A6PrepareConfReq.ReqStartConfVector(builder, 1)
-    builder.PrependUOffsetTRelative(conf_data)
-    conf = builder.EndVector()
-    A6PrepareConfReq.Start(builder)
-    A6PrepareConfReq.AddConf(builder, conf)
-    req = A6PrepareConfReq.End(builder)
-    builder.Finish(req)
-    buf = builder.Output()
-    req = NewHttpRequest(ty=RPC_PREPARE_CONF, buf=buf)
-    assert req.configs
-    assert len(req.configs) >= 1
+def test_request_unknown_handler():
+    builder = runner_utils.new_builder()
+    r = default_request()
+    req = RunnerHttpRequest(r)
+    ok = req.unknown_handler(builder)
+    assert ok
 
 
-def test_request_call():
-    req_path = "/hello/python/runner"
-    req_src_ip = [127, 0, 0, 1]
-    req_args = {"a": "args"}
-    req_headers = {"h": "headers"}
+def test_request_config_handler():
+    builder = runner_utils.new_builder()
+    r = default_request()
+    req = RunnerHttpRequest(r)
+    req.conf_token = 0
+    ok = req.config_handler(builder)
+    assert not ok
+    req.conf_token = 1
+    ok = req.config_handler(builder)
+    assert ok
 
-    builder = new_builder()
-    path = builder.CreateString(req_path)
-    src_ip = bytes(bytearray(req_src_ip))
-    src_ip = builder.CreateByteVector(src_ip)
 
-    args = _create_entry(builder, "a", req_args.get("a"))
-    A6HTTPReqCallReq.StartArgsVector(builder, 1)
-    builder.PrependUOffsetTRelative(args)
-    args_vec = builder.EndVector()
-
-    headers = _create_entry(builder, "h", req_headers.get("h"))
-    A6HTTPReqCallReq.StartHeadersVector(builder, 1)
-    builder.PrependUOffsetTRelative(headers)
-    headers_vec = builder.EndVector()
-
-    A6HTTPReqCallReq.Start(builder)
-    A6HTTPReqCallReq.AddId(builder, 1)
-    A6HTTPReqCallReq.AddMethod(builder, A6Method.Method.GET)
-    A6HTTPReqCallReq.AddPath(builder, path)
-    A6HTTPReqCallReq.AddSrcIp(builder, src_ip)
-    A6HTTPReqCallReq.AddArgs(builder, args_vec)
-    A6HTTPReqCallReq.AddHeaders(builder, headers_vec)
-    req = A6HTTPReqCallReq.End(builder)
-    builder.Finish(req)
-    buf = builder.Output()
-    req = NewHttpRequest(ty=RPC_HTTP_REQ_CALL, buf=buf)
-
-    assert req.src_ip == ".".join('%s' % ip for ip in req_src_ip)
-    assert req.path == req_path
-    assert req.args.get("a") == req_args.get("a")
-    assert req.headers.get("h") == req_headers.get("h")
-    assert req.method == get_name_by_code(A6Method.Method.GET)
+def test_request_call_handler():
+    builder = runner_utils.new_builder()
+    r = default_request()
+    req = RunnerHttpRequest(r)
+    req.path = ""
+    req.headers = {}
+    req.args = {}
+    ok = req.call_handler(builder)
+    assert not ok
+    req.path = "/hello"
+    ok = req.call_handler(builder)
+    assert ok
 
 
 def test_request_handler():
-    req = NewHttpRequest()
+    r = default_request()
+    req = RunnerHttpRequest(r)
     req.id = 1000
     assert req.id == 1000
-    req.rpc_type = RPC_UNKNOWN
-    assert req.rpc_type == RPC_UNKNOWN
+    req.rpc_type = runner_utils.RPC_UNKNOWN
+    assert req.rpc_type == runner_utils.RPC_UNKNOWN
     req.rpc_buf = b'hello'
     assert req.rpc_buf == b'hello'
     req.conf_token = 10

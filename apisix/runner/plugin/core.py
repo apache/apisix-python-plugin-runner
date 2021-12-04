@@ -17,52 +17,26 @@
 import os
 import importlib
 from pkgutil import iter_modules
-from typing import Tuple
-from apisix.runner.server.response import RESP_STATUS_CODE_OK
-from apisix.runner.server.response import RESP_STATUS_MESSAGE_OK
-from apisix.runner.server.response import RESP_STATUS_CODE_SERVICE_UNAVAILABLE
-from apisix.runner.server.response import RESP_STATUS_CODE_BAD_REQUEST
+from apisix.runner.http.response import Response as HttpResponse
+from apisix.runner.http.request import Request as HttpRequest
 
 
-def execute(configs: dict, request, response) -> Tuple[int, str]:
+def execute(configs: dict, r, req: HttpRequest, reps: HttpResponse) -> bool:
     for name in configs:
         plugin = configs.get(name)
         if type(plugin).__name__.lower() != name.lower():
-            return RESP_STATUS_CODE_BAD_REQUEST, "execute plugin `%s`, plugin handler is not object" % name
+            r.log.error("execute plugin `%s`, plugin handler is not object" % name)
+            return False
 
         try:
-            plugin.filter(request, response)
+            plugin.filter(req, reps)
         except AttributeError as e:
-            return RESP_STATUS_CODE_SERVICE_UNAVAILABLE, "execute plugin `%s`, %s" % (name, e.args.__str__())
+            r.log.error("execute plugin `%s`, %s" % (name, e.args.__str__()))
+            return False
         except TypeError as e:
-            return RESP_STATUS_CODE_BAD_REQUEST, "execute plugin `%s`, %s" % (name, e.args.__str__())
-        else:
-            response.action_type = plugin.action
-            refresh_response(request, response)
-
-    return RESP_STATUS_CODE_OK, RESP_STATUS_MESSAGE_OK
-
-
-def refresh_response(request, response) -> None:
-    # setting default header
-    if len(request.headers) >= 1:
-        for req_hk in request.headers.keys():
-            req_hv = request.headers.get(req_hk)
-            resp_hv = response.headers.get(req_hk)
-            if not resp_hv:
-                response.headers[req_hk] = req_hv
-
-    # setting default path
-    if not response.path or len(response.path) == 0:
-        response.path = request.path
-
-    # setting default args
-    if len(request.args) >= 1:
-        for req_ak in request.args.keys():
-            req_av = request.args.get(req_ak)
-            resp_av = response.args.get(req_ak)
-            if not resp_av:
-                response.args[req_ak] = req_av
+            r.log.error("execute plugin `%s`, %s" % (name, e.args.__str__()))
+            return False
+    return True
 
 
 def loading() -> dict:

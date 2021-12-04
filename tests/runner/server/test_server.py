@@ -15,14 +15,28 @@
 # limitations under the License.
 #
 
-from apisix.runner.server.server import Server as NewServer
-from apisix.runner.server.config import Config as NewConfig
+import socket
+import logging
+from apisix.runner.server.server import Server as RunnerServer
+from apisix.runner.server.server import RPCRequest as RunnerRPCRequest
+from apisix.runner.server.logger import Logger as RunnerServerLogger
+from apisix.runner.server.config import Config as RunnerConfig
 
 
 def test_server(capsys):
-    config = NewConfig()
-    server = NewServer(config)
+    config = RunnerConfig()
+    server = RunnerServer(config)
     del server
     captured = capsys.readouterr()
     assert captured.out.find("listening on unix") != -1
     assert captured.out.find("Bye") != -1
+
+
+def test_rpc_request():
+    sock = socket.socket()
+    logger = RunnerServerLogger(logging.INFO)
+    r = RunnerRPCRequest(sock, logger)
+    assert r.log == logger
+    assert r.conn == sock
+    assert r.request.ty == 0
+    assert len(r.request.data) == 0

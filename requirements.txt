@@ -1,4 +1,4 @@
-a6pluginprotos==0.1.0
+a6pluginprotos==0.2.1
 click==8.0.1
 minicache==0.0.1
 PyYAML==5.4.1

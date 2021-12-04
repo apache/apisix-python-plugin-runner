@@ -14,48 +14,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import logging
+import socket
 
-from apisix.runner.server.handle import Handle as NewServerHandle
-from apisix.runner.http.protocol import RPC_PREPARE_CONF
-from apisix.runner.http.protocol import RPC_HTTP_REQ_CALL
-from apisix.runner.http.protocol import RPC_UNKNOWN
-from apisix.runner.http.protocol import new_builder
-from apisix.runner.server.response import RESP_STATUS_CODE_OK
-from apisix.runner.server.response import RESP_STATUS_MESSAGE_OK
-from apisix.runner.server.response import RESP_STATUS_CODE_BAD_REQUEST
-from apisix.runner.server.response import RESP_STATUS_MESSAGE_BAD_REQUEST
-from apisix.runner.server.response import RESP_STATUS_CODE_CONF_TOKEN_NOT_FOUND
-from a6pluginproto.HTTPReqCall import Req as A6HTTPReqCallReq
-from a6pluginproto.PrepareConf import Req as A6PrepareConfReq
-from a6pluginproto.PrepareConf import Resp as A6PrepareConfResp
-from a6pluginproto import TextEntry as A6TextEntry
-from a6pluginproto import Method as A6Method
-
-
-def test_type():
-    handle = NewServerHandle(ty=RPC_UNKNOWN)
-    assert handle.type == RPC_UNKNOWN
-    handle = NewServerHandle(ty=RPC_PREPARE_CONF)
-    assert handle.type == RPC_PREPARE_CONF
-    handle = NewServerHandle(ty=RPC_HTTP_REQ_CALL)
-    assert handle.type == RPC_HTTP_REQ_CALL
+import apisix.runner.utils.common as runner_utils
+from apisix.runner.server.handle import Handle as RunnerServerHandle
+from apisix.runner.server.logger import Logger as RunnerServerLogger
+from apisix.runner.server.server import RPCRequest as RunnerRPCRequest
+from A6.HTTPReqCall import Req as A6HTTPReqCallReq
+from A6.PrepareConf import Req as A6PrepareConfReq
+from A6.PrepareConf import Resp as A6PrepareConfResp
+from A6 import TextEntry as A6TextEntry
+from A6 import Method as A6Method
+from A6.Err.Resp import Resp as ErrResp
+from A6.HTTPReqCall.Resp import Resp as HCResp
+from A6.HTTPReqCall.Action import Action as HCAction
+from A6.Err.Code import Code as ErrCode
+from A6.HTTPReqCall.Stop import Stop as HCStop
+from A6.HTTPReqCall.Rewrite import Rewrite as HCRewrite
 
 
-def test_buffer():
-    handle = NewServerHandle(buf="Hello Python Runner".encode())
-    assert handle.buffer == b"Hello Python Runner"
+def default_request():
+    sock = socket.socket()
+    logger = RunnerServerLogger(logging.INFO)
+    return RunnerRPCRequest(sock, logger)
 
 
-def test_debug():
-    handle = NewServerHandle(debug=False)
-    assert not handle.debug
-    handle = NewServerHandle(debug=True)
-    assert handle.debug
-
-
-def test_dispatch_config():
-    builder = new_builder()
-    name = builder.CreateString("say")
+def default_plugin_buffer(name: str = "stop"):
+    builder = runner_utils.new_builder()
+    name = builder.CreateString(name)
     value = builder.CreateString('{"body":"Hello Python Runner"}')
     A6TextEntry.Start(builder)
     A6TextEntry.AddName(builder, name)
@@ -70,18 +57,11 @@ def test_dispatch_config():
     A6PrepareConfReq.AddConf(builder, conf)
     req = A6PrepareConfReq.End(builder)
     builder.Finish(req)
-    buf = builder.Output()
-    handle = NewServerHandle(ty=RPC_PREPARE_CONF, buf=buf)
-    response = handle.dispatch()
-    resp = A6PrepareConfResp.Resp.GetRootAs(response.data)
-    assert response.code == RESP_STATUS_CODE_OK
-    assert response.message == RESP_STATUS_MESSAGE_OK
-    assert response.type == RPC_PREPARE_CONF
-    assert resp.ConfToken() != 0
+    return builder.Output()
 
 
-def test_dispatch_call():
-    builder = new_builder()
+def default_call_buffer(token: int = 0):
+    builder = runner_utils.new_builder()
     # request path
     path = builder.CreateString("/hello/python/runner")
     # request ip
@@ -115,19 +95,74 @@ def test_dispatch_call():
     A6HTTPReqCallReq.AddSrcIp(builder, src_ip)
     A6HTTPReqCallReq.AddArgs(builder, args_vec)
     A6HTTPReqCallReq.AddHeaders(builder, headers_vec)
+    A6HTTPReqCallReq.AddConfToken(builder, token)
     req = A6HTTPReqCallReq.End(builder)
     builder.Finish(req)
-    buf = builder.Output()
-
-    handle = NewServerHandle(ty=RPC_HTTP_REQ_CALL, buf=buf)
-    response = handle.dispatch()
-    assert response.code == RESP_STATUS_CODE_CONF_TOKEN_NOT_FOUND
-    assert response.type == RPC_UNKNOWN
+    return builder.Output()
 
 
 def test_dispatch_unknown():
-    handle = NewServerHandle(ty=RPC_UNKNOWN)
+    r = default_request()
+    r.request.ty = runner_utils.RPC_UNKNOWN
+    handle = RunnerServerHandle(r)
     response = handle.dispatch()
-    assert response.code == RESP_STATUS_CODE_BAD_REQUEST
-    assert response.message == RESP_STATUS_MESSAGE_BAD_REQUEST
-    assert response.type == RPC_UNKNOWN
+    err = ErrResp.GetRootAsResp(response.Output())
+    assert err.Code() == runner_utils.RPC_UNKNOWN
+
+
+def test_dispatch_config():
+    buf = default_plugin_buffer()
+    r = default_request()
+    r.request.ty = runner_utils.RPC_PREPARE_CONF
+    r.request.data = buf
+    handle = RunnerServerHandle(r)
+    response = handle.dispatch()
+    resp = A6PrepareConfResp.Resp.GetRootAs(response.Output())
+    assert resp.ConfToken() != 0
+
+
+def test_dispatch_call():
+    r = default_request()
+    r.request.ty = runner_utils.RPC_PREPARE_CONF
+    r.request.data = default_plugin_buffer("stop")
+    handle = RunnerServerHandle(r)
+    response = handle.dispatch()
+    resp = A6PrepareConfResp.Resp.GetRootAs(response.Output())
+    assert resp.ConfToken() != 0
+
+    buf = default_call_buffer(resp.ConfToken())
+    r.request.ty = runner_utils.RPC_HTTP_REQ_CALL
+    r.request.data = buf
+    handle = RunnerServerHandle(r)
+    response = handle.dispatch()
+    resp = HCResp.GetRootAsResp(response.Output())
+    assert resp.Id() == 1
+    assert resp.ActionType() == HCAction.Stop
+    stop = HCStop()
+    stop.Init(resp.Action().Bytes, resp.Action().Pos)
+    assert stop.BodyLength() == len("Hello, Python Runner of APISIX")
+    assert stop.Status() == 201
+
+    r.request.ty = runner_utils.RPC_PREPARE_CONF
+    r.request.data = default_plugin_buffer("rewrite")
+    handle = RunnerServerHandle(r)
+    response = handle.dispatch()
+    resp = A6PrepareConfResp.Resp.GetRootAs(response.Output())
+    assert resp.ConfToken() != 0
+    r.request.ty = runner_utils.RPC_HTTP_REQ_CALL
+    r.request.data = default_call_buffer(resp.ConfToken())
+    handle = RunnerServerHandle(r)
+    response = handle.dispatch()
+    resp = HCResp.GetRootAsResp(response.Output())
+    assert resp.Id() == 1
+    assert resp.ActionType() == HCAction.Rewrite
+    rewrite = HCRewrite()
+    rewrite.Init(resp.Action().Bytes, resp.Action().Pos)
+    assert rewrite.Path() == b'/a6/python/runner'
+
+    buf = default_call_buffer()
+    r.request.data = buf
+    handle = RunnerServerHandle(r)
+    response = handle.dispatch()
+    reps = ErrResp.GetRootAs(response.Output())
+    assert reps.Code() == ErrCode.CONF_TOKEN_NOT_FOUND

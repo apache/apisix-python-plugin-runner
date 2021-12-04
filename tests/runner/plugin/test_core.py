@@ -16,28 +16,16 @@
 #
 
 import os
+import socket
+import logging
 from pkgutil import iter_modules
 
 from apisix.runner.plugin.core import loading as plugin_loading
 from apisix.runner.plugin.core import execute as plugin_execute
-from apisix.runner.plugin.core import refresh_response as refresh_response
+from apisix.runner.server.logger import Logger as RunnerServerLogger
+from apisix.runner.server.server import RPCRequest as RunnerRPCRequest
 from apisix.runner.http.request import Request as NewHttpRequest
 from apisix.runner.http.response import Response as NewHttpResponse
-from apisix.runner.server.response import RESP_STATUS_CODE_OK
-from apisix.runner.server.response import RESP_STATUS_CODE_SERVICE_UNAVAILABLE
-from apisix.runner.server.response import RESP_STATUS_CODE_BAD_REQUEST
-
-
-class Test:
-    """
-    test plugin
-    """
-    def filter(self):
-        """
-        test plugin handler
-        :return:
-        """
-        pass
 
 
 def test_loading():
@@ -51,31 +39,39 @@ def test_loading():
 
 
 def test_execute():
-    request = NewHttpRequest()
+    sock = socket.socket()
+    logger = RunnerServerLogger(logging.INFO)
+    r = RunnerRPCRequest(sock, logger)
+    request = NewHttpRequest(r)
     response = NewHttpResponse()
     configs = plugin_loading()
     for p_name in configs:
         configs[p_name] = configs.get(p_name)()
-    (code, _) = plugin_execute(configs, request, response)
-    assert code == RESP_STATUS_CODE_OK
-    (code, _) = plugin_execute(configs, request, None)
-    assert code == RESP_STATUS_CODE_SERVICE_UNAVAILABLE
-    configs["test"] = Test()
-    (code, _) = plugin_execute(configs, request, response)
-    assert code == RESP_STATUS_CODE_BAD_REQUEST
+    ok = plugin_execute(configs, r, request, response)
+    assert ok
+    # stop plugin
+    assert response.headers.get("X-Resp-A6-Runner") == "Python"
+    assert response.body == "Hello, Python Runner of APISIX"
+    assert response.status_code == 201
+    # rewrite plugin
+    assert request.headers.get("X-Resp-A6-Runner") == "Python"
+    assert request.args.get("a6_runner") == "Python"
+    assert request.path == "/a6/python/runner"
+    configs = {"test": {}}
+    ok = plugin_execute(configs, r, request, response)
+    assert not ok
 
+    class AttributeErrorExample:
+        pass
 
-def test_refresh_response():
-    request = NewHttpRequest()
-    request.path = "/hello"
-    request.args = {
-        "q": "hello"
-    }
-    request.headers = {
-        "h": "world"
-    }
-    response = NewHttpResponse()
-    refresh_response(request, response)
-    assert request.path == response.path
-    assert request.args == response.args
-    assert request.headers == response.headers
+    configs = {AttributeErrorExample.__name__.lower(): AttributeErrorExample()}
+    ok = plugin_execute(configs, r, request, response)
+    assert not ok
+
+    class TypeErrorExample:
+        def __init__(self):
+            self.filter = 10
+
+    configs = {TypeErrorExample.__name__.lower(): TypeErrorExample()}
+    ok = plugin_execute(configs, r, request, response)
+    assert not ok

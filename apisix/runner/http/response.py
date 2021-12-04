@@ -16,21 +16,14 @@
 #
 
 import flatbuffers
-from a6pluginproto import TextEntry as A6TextEntry
-from a6pluginproto.Err import Resp as A6ErrResp
-from a6pluginproto.HTTPReqCall import Stop as A6HTTPReqCallStop
-from a6pluginproto.HTTPReqCall import Rewrite as A6HTTPReqCallRewrite
-from a6pluginproto.HTTPReqCall import Resp as A6HTTPReqCallResp
-from a6pluginproto.HTTPReqCall import Action as A6HTTPReqCallAction
-from a6pluginproto.PrepareConf import Resp as A6PrepareConfResp
-from apisix.runner.http.protocol import new_builder
-from apisix.runner.http.protocol import RPC_PREPARE_CONF
-from apisix.runner.http.protocol import RPC_HTTP_REQ_CALL
+import apisix.runner.utils.common as runner_utils
+from A6.HTTPReqCall import Stop as HCStop
+from A6.HTTPReqCall import Action as HCAction
 
 RESP_MAX_DATA_SIZE = 2 << 24 - 1
 
-PLUGIN_ACTION_STOP = A6HTTPReqCallAction.Action.Stop
-PLUGIN_ACTION_REWRITE = A6HTTPReqCallAction.Action.Rewrite
+PLUGIN_ACTION_STOP = HCAction.Action.Stop
+PLUGIN_ACTION_REWRITE = HCAction.Action.Rewrite
 
 
 class Response:
@@ -239,98 +232,22 @@ class Response:
         else:
             return False
 
-    def _gen_config_flat(self, builder: flatbuffers.Builder) -> int:
-        A6PrepareConfResp.Start(builder)
-        A6PrepareConfResp.AddConfToken(builder, self.token)
-        return A6PrepareConfResp.End(builder)
+    @runner_utils.response_call(HCAction.Action.Stop)
+    def call_handler(self, builder: flatbuffers.Builder):
+        if not self.changed():
+            return None, 0
+        headers_vector = runner_utils.create_dict_vector(builder, self.headers, HCAction.Action.Stop,
+                                                         runner_utils.VECTOR_TYPE_HEADER)
 
-    def _gen_unknown_flat(self, builder: flatbuffers.Builder) -> int:
-        A6ErrResp.Start(builder)
-        A6ErrResp.AddCode(builder, self.error_code)
-        return A6ErrResp.End(builder)
+        body_vector = runner_utils.create_str_vector(builder, self.body)
 
-    def _gen_request_flat(self, builder: flatbuffers.Builder) -> int:
-        def _to_a6_entry(data: dict) -> list:
-            entries = []
-            if not isinstance(data, dict) and len(data) <= 0:
-                return entries
-            for key in data:
-                val = data[key]
-                key_b = builder.CreateString(key)
-                val_b = builder.CreateString(val)
-                A6TextEntry.Start(builder)
-                A6TextEntry.AddName(builder, key_b)
-                A6TextEntry.AddValue(builder, val_b)
-                entry = A6TextEntry.End(builder)
-                entries.append(entry)
-            return entries
+        status_code = 200
+        if self.status_code > 0:
+            status_code = self.status_code
 
-        if self.action_type == A6HTTPReqCallAction.Action.Stop:
-            headers_entry = _to_a6_entry(self.headers)
-            headers_len = len(headers_entry)
-            A6HTTPReqCallStop.StopStartHeadersVector(builder, headers_len)
-            for i in range(headers_len - 1, -1, -1):
-                builder.PrependUOffsetTRelative(headers_entry[i])
-            headers_vector = builder.EndVector()
-
-            body = b''
-            if self.body and len(self.body) > 0:
-                body = self.body.encode(encoding="UTF-8")
-            body_vector = builder.CreateByteVector(body)
-
-            status_code = 200
-            if self.status_code > 0:
-                status_code = self.status_code
-
-            A6HTTPReqCallStop.StopStart(builder)
-            A6HTTPReqCallStop.StopAddStatus(builder, status_code)
-            A6HTTPReqCallStop.StopAddBody(builder, body_vector)
-            A6HTTPReqCallStop.StopAddHeaders(builder, headers_vector)
-            action = A6HTTPReqCallStop.StopEnd(builder)
-        else:
-            args_entry = _to_a6_entry(self.args)
-            args_len = len(args_entry)
-            A6HTTPReqCallRewrite.RewriteStartArgsVector(builder, args_len)
-            for i in range(args_len - 1, -1, -1):
-                builder.PrependUOffsetTRelative(args_entry[i])
-            args_vector = builder.EndVector()
-
-            headers_entry = _to_a6_entry(self.headers)
-            headers_len = len(headers_entry)
-            A6HTTPReqCallRewrite.RewriteStartHeadersVector(builder, headers_len)
-            for i in range(headers_len - 1, -1, -1):
-                builder.PrependUOffsetTRelative(headers_entry[i])
-            headers_vector = builder.EndVector()
-
-            path = b'/'
-            if self.path and len(self.path) > 0:
-                path = self.path.encode(encoding="UTF-8")
-            path_vector = builder.CreateByteVector(path)
-
-            A6HTTPReqCallRewrite.RewriteStart(builder)
-            A6HTTPReqCallRewrite.RewriteAddPath(builder, path_vector)
-            A6HTTPReqCallRewrite.RewriteAddArgs(builder, args_vector)
-            A6HTTPReqCallRewrite.RewriteAddHeaders(builder, headers_vector)
-            action = A6HTTPReqCallRewrite.RewriteEnd(builder)
-
-        A6HTTPReqCallResp.Start(builder)
-        A6HTTPReqCallResp.AddId(builder, self.id)
-        A6HTTPReqCallResp.AddActionType(builder, self.action_type)
-        A6HTTPReqCallResp.AddAction(builder, action)
-        return A6HTTPReqCallResp.End(builder)
-
-    def flatbuffers(self) -> flatbuffers.Builder:
-        """
-        response to flat buffer object
-        :return:
-        """
-        builder = new_builder()
-
-        rpc_handlers = {
-            RPC_PREPARE_CONF: self._gen_config_flat,
-            RPC_HTTP_REQ_CALL: self._gen_request_flat
-        }
-
-        res = rpc_handlers.get(self.rpc_type, self._gen_unknown_flat)(builder)
-        builder.Finish(res)
-        return builder
+        HCStop.StopStart(builder)
+        HCStop.StopAddStatus(builder, status_code)
+        HCStop.StopAddBody(builder, body_vector)
+        HCStop.StopAddHeaders(builder, headers_vector)
+        stop = HCStop.StopEnd(builder)
+        return stop, self.id

@@ -28,7 +28,6 @@ class Base:
         """
         self._name = name
         self._config = {}
-        self._action = PLUGIN_ACTION_REWRITE
 
     @property
     def name(self) -> str:
@@ -66,34 +65,3 @@ class Base:
             self._config = config
         else:
             self._config = {}
-
-    @property
-    def action(self) -> int:
-        """
-        get plugin type
-        :return:
-        """
-        return self._action
-
-    @action.setter
-    def action(self, action: int) -> None:
-        """
-        set plugin type
-        :param action:
-        :return:
-        """
-        self._action = action
-
-    def stop(self) -> None:
-        """
-        Set plugin to `Stop` type
-        :return:
-        """
-        self.action = PLUGIN_ACTION_STOP
-
-    def rewrite(self) -> None:
-        """
-        Set plugin to `Rewrite` type
-        :return:
-        """
-        self.action = PLUGIN_ACTION_REWRITE

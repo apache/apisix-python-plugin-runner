@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -15,12 +17,31 @@
 # limitations under the License.
 #
 
-import flatbuffers
-from apisix.runner.http.protocol import new_builder
+import os
+import click
+
+from apisix.runner.server.server import Server as NewServer
+from apisix.runner.server.config import Config as NewConfig
+
+RUNNER_VERSION = "0.1.0"
 
 
-def test_new_builder():
-    builder = new_builder()
-    assert isinstance(builder, flatbuffers.Builder)
-    assert builder.Bytes == flatbuffers.Builder(256).Bytes
-    assert builder.Bytes != flatbuffers.Builder(512).Bytes
+@click.group()
+@click.version_option(version=RUNNER_VERSION)
+def runner() -> None:
+    pass
+
+
+@runner.command()
+def start() -> None:
+    config = NewConfig("%s/conf" % os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    server = NewServer(config)
+    server.receive()
+
+
+def main() -> None:
+    runner()
+
+
+if __name__ == '__main__':
+    main()

@@ -42,18 +42,10 @@ class Rewrite(Base):
         # print(self.config)
 
         # Rewrite request headers
-        headers = request.headers
-        headers["X-Resp-A6-Runner"] = "Python"
-        response.headers = headers
+        request.headers["X-Resp-A6-Runner"] = "Python"
 
         # Rewrite request args
-        args = request.args
-        args["a6_runner"] = "Python"
-        response.args = args
+        request.args["a6_runner"] = "Python"
 
         # Rewrite request path
-        path = request.path
-        response.path = path
-
-        # Set plugin to `rewrite` type, default `rewrite`
-        self.rewrite()
+        request.path = "/a6/python/runner"

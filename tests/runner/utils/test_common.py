@@ -15,31 +15,22 @@
 # limitations under the License.
 #
 
-import os
-import click
-
-from apisix.runner.server.server import Server as NewServer
-from apisix.runner.server.config import Config as NewConfig
-
-RUNNER_VERSION = "0.1.0"
+import flatbuffers
+import apisix.runner.utils.common as runner_utils
 
 
-@click.group()
-@click.version_option(version=RUNNER_VERSION)
-def runner() -> None:
-    pass
+def test_get_method_code_by_name():
+    for name in runner_utils.methodCodes:
+        assert runner_utils.get_method_code_by_name(name) == runner_utils.methodCodes.get(name)
 
 
-@runner.command()
-def start() -> None:
-    config = NewConfig(os.path.dirname(os.path.abspath(__file__)))
-    server = NewServer(config)
-    server.receive()
+def test_get_method_name_by_code():
+    for code in runner_utils.methodNames:
+        assert runner_utils.get_method_name_by_code(code) == runner_utils.methodNames.get(code)
 
 
-def main() -> None:
-    runner()
-
-
-if __name__ == '__main__':
-    main()
+def test_new_builder():
+    builder = runner_utils.new_builder()
+    assert isinstance(builder, flatbuffers.Builder)
+    assert builder.Bytes == flatbuffers.Builder(256).Bytes
+    assert builder.Bytes != flatbuffers.Builder(512).Bytes
