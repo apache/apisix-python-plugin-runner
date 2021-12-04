@@ -19,8 +19,6 @@ import flatbuffers
 import apisix.runner.utils.common as runner_utils
 from apisix.runner.utils.common import VECTOR_TYPE_HEADER
 from apisix.runner.utils.common import VECTOR_TYPE_QUERY
-from A6.HTTPReqCall import Rewrite as HCRewrite
-from A6.HTTPReqCall import Stop as HCStop
 from A6.HTTPReqCall import Action as HCAction
 
 
