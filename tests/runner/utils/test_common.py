@@ -17,6 +17,11 @@
 
 import flatbuffers
 import apisix.runner.utils.common as runner_utils
+from apisix.runner.utils.common import VECTOR_TYPE_HEADER
+from apisix.runner.utils.common import VECTOR_TYPE_QUERY
+from A6.HTTPReqCall import Rewrite as HCRewrite
+from A6.HTTPReqCall import Stop as HCStop
+from A6.HTTPReqCall import Action as HCAction
 
 
 def test_get_method_code_by_name():
@@ -34,3 +39,48 @@ def test_new_builder():
     assert isinstance(builder, flatbuffers.Builder)
     assert builder.Bytes == flatbuffers.Builder(256).Bytes
     assert builder.Bytes != flatbuffers.Builder(512).Bytes
+
+
+def test_create_dict_entry():
+    builder = runner_utils.new_builder()
+    entries = runner_utils.create_dict_entry(builder, {})
+    assert not entries
+    examples = {"q": "hello", "a": "world"}
+    entries = runner_utils.create_dict_entry(builder, examples)
+    assert len(entries) == 2
+
+
+def test_create_dict_vector():
+    builder = runner_utils.new_builder()
+    b = runner_utils.create_dict_vector(builder, {})
+    assert not b
+    b = runner_utils.create_dict_vector(builder, {"q": "hello", "a": "world"}, HCAction.Action.Rewrite,
+                                        VECTOR_TYPE_HEADER)
+    assert b > 0
+    b = runner_utils.create_dict_vector(builder, {"q": "hello", "a": "world"}, HCAction.Action.Rewrite,
+                                        VECTOR_TYPE_QUERY)
+    assert b > 0
+    b = runner_utils.create_dict_vector(builder, {"q": "hello", "a": "world"}, HCAction.Action.Stop,
+                                        VECTOR_TYPE_HEADER)
+    assert b > 0
+    b = runner_utils.create_dict_vector(builder, {"q": "hello", "a": "world"}, 0, 0)
+    assert not b
+
+
+def test_create_str_vector():
+    builder = runner_utils.new_builder()
+    b = runner_utils.create_str_vector(builder, "")
+    assert not b
+    b = runner_utils.create_str_vector(builder, "Hello")
+    assert b
+
+
+def test_get_vector_object():
+    obj = runner_utils.get_vector_object(HCAction.Action.Rewrite, VECTOR_TYPE_HEADER)
+    assert obj
+    obj = runner_utils.get_vector_object(HCAction.Action.Rewrite, VECTOR_TYPE_QUERY)
+    assert obj
+    obj = runner_utils.get_vector_object(HCAction.Action.Stop, VECTOR_TYPE_HEADER)
+    assert obj
+    obj = runner_utils.get_vector_object(HCAction.Action.Stop, VECTOR_TYPE_QUERY)
+    assert not obj

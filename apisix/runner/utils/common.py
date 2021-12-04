@@ -129,7 +129,7 @@ def create_dict_vector(builder: flatbuffers.Builder, data: dict, action: int = 0
 
 
 def create_str_vector(builder: flatbuffers.Builder, data: str):
-    res = b''
+    res = 0
     if not data or len(data) <= 0:
         return res
 
