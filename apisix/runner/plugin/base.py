@@ -15,9 +15,6 @@
 # limitations under the License.
 #
 
-from apisix.runner.http.response import PLUGIN_ACTION_REWRITE
-from apisix.runner.http.response import PLUGIN_ACTION_STOP
-
 
 class Base:
     def __init__(self, name: str):
