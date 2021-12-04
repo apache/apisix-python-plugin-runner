@@ -22,6 +22,7 @@ from apisix.runner.http.response import Response as RunnerHttpResponse
 def test_response_call_handler():
     builder = runner_utils.new_builder()
     resp = RunnerHttpResponse()
+    resp.id = 1
     ok = resp.call_handler(builder)
     assert not ok
     resp.body = "Hello Python Runner"

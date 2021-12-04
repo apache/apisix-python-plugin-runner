@@ -153,7 +153,7 @@ def response_call(action_type: int):
     def decorator(func):
         def wrapper(cls, builder: flatbuffers.Builder):
             (action, id) = func(cls, builder)
-            if not action:
+            if not action or id == 0:
                 return False
 
             HCResp.Start(builder)

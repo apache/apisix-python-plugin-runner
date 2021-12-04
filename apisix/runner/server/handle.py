@@ -47,17 +47,19 @@ class Handle:
             configs = req.configs
             # cache plugins config
             ok = runner_cache.set_config_by_token(token, configs)
-            if ok:
-                req.conf_token = token
-                ok = req.config_handler(builder)
-                if not ok:
-                    self.r.log.error("prepare conf request failure")
-                    req.code = ErrCode.BAD_REQUEST
-                    req.unknown_handler(builder)
-            else:
+            if not ok:
                 self.r.log.error("token `%d` cache setting failed" % token)
                 req.code = ErrCode.CONF_TOKEN_NOT_FOUND
                 req.unknown_handler(builder)
+                return builder
+
+            req.conf_token = token
+            ok = req.config_handler(builder)
+            if not ok:
+                self.r.log.error("prepare conf request failure")
+                req.code = ErrCode.BAD_REQUEST
+                req.unknown_handler(builder)
+                return builder
 
             return builder
 
@@ -84,10 +86,12 @@ class Handle:
                 req.unknown_handler(builder)
                 return builder
 
+            # response changed
             ok = resp.call_handler(builder)
             if ok:
                 return builder
 
+            # request changed
             ok = req.call_handler(builder)
             if not ok:
                 self.r.log.error("http request call failure")

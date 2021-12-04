@@ -25,6 +25,8 @@ def test_base():
     hello.config = hello_config
     assert hello.name == hello_name
     assert hello.config == hello_config
+    hello.name = "hello1"
+    assert hello.name != hello_name
 
     world_name = "world"
     world_config = "apisxi"
@@ -32,3 +34,5 @@ def test_base():
     world.config = world_config
     assert world.name == world_name
     assert world.config != world_config
+    world.name = "world1"
+    assert world.name != world_name

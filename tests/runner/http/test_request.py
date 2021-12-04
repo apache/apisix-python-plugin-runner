@@ -59,6 +59,7 @@ def test_request_call_handler():
     ok = req.call_handler(builder)
     assert not ok
     req.headers["X-Hello"] = "World"
+    req.id = 1
     ok = req.call_handler(builder)
     assert ok
     req.path = "/hello"

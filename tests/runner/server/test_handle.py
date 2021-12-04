@@ -40,18 +40,20 @@ def default_request():
     return RunnerRPCRequest(sock, logger)
 
 
-def default_plugin_buffer(name: str = "stop"):
+def default_plugin_buffer(name: str = "stop", enable_conf: bool = True):
     builder = runner_utils.new_builder()
-    name = builder.CreateString(name)
-    value = builder.CreateString('{"body":"Hello Python Runner"}')
-    A6TextEntry.Start(builder)
-    A6TextEntry.AddName(builder, name)
-    A6TextEntry.AddValue(builder, value)
-    conf_data = A6TextEntry.End(builder)
+    conf = 0
+    if enable_conf:
+        name = builder.CreateString(name)
+        value = builder.CreateString('{"body":"Hello Python Runner"}')
+        A6TextEntry.Start(builder)
+        A6TextEntry.AddName(builder, name)
+        A6TextEntry.AddValue(builder, value)
+        conf_data = A6TextEntry.End(builder)
 
-    A6PrepareConfReq.ReqStartConfVector(builder, 1)
-    builder.PrependUOffsetTRelative(conf_data)
-    conf = builder.EndVector()
+        A6PrepareConfReq.ReqStartConfVector(builder, 1)
+        builder.PrependUOffsetTRelative(conf_data)
+        conf = builder.EndVector()
 
     A6PrepareConfReq.Start(builder)
     A6PrepareConfReq.AddConf(builder, conf)
@@ -60,7 +62,7 @@ def default_plugin_buffer(name: str = "stop"):
     return builder.Output()
 
 
-def default_call_buffer(token: int = 0):
+def default_call_buffer(token: int = 0, id: int = 1):
     builder = runner_utils.new_builder()
     # request path
     path = builder.CreateString("/hello/python/runner")
@@ -89,7 +91,7 @@ def default_call_buffer(token: int = 0):
     headers_vec = builder.EndVector()
 
     A6HTTPReqCallReq.Start(builder)
-    A6HTTPReqCallReq.AddId(builder, 1)
+    A6HTTPReqCallReq.AddId(builder, id)
     A6HTTPReqCallReq.AddMethod(builder, A6Method.Method.GET)
     A6HTTPReqCallReq.AddPath(builder, path)
     A6HTTPReqCallReq.AddSrcIp(builder, src_ip)
@@ -107,12 +109,20 @@ def test_dispatch_unknown():
     handle = RunnerServerHandle(r)
     response = handle.dispatch()
     err = ErrResp.GetRootAsResp(response.Output())
-    assert err.Code() == runner_utils.RPC_UNKNOWN
+    assert err.Code() == ErrCode.BAD_REQUEST
 
 
 def test_dispatch_config():
-    buf = default_plugin_buffer()
+    buf = default_plugin_buffer("stop", False)
     r = default_request()
+    r.request.ty = runner_utils.RPC_PREPARE_CONF
+    r.request.data = buf
+    handle = RunnerServerHandle(r)
+    response = handle.dispatch()
+    err = ErrResp.GetRootAsResp(response.Output())
+    assert err.Code() == ErrCode.CONF_TOKEN_NOT_FOUND
+
+    buf = default_plugin_buffer("stop")
     r.request.ty = runner_utils.RPC_PREPARE_CONF
     r.request.data = buf
     handle = RunnerServerHandle(r)
@@ -136,7 +146,7 @@ def test_dispatch_call():
     handle = RunnerServerHandle(r)
     response = handle.dispatch()
     resp = HCResp.GetRootAsResp(response.Output())
-    assert resp.Id() == 1
+    assert resp.Id() > 0
     assert resp.ActionType() == HCAction.Stop
     stop = HCStop()
     stop.Init(resp.Action().Bytes, resp.Action().Pos)
@@ -149,19 +159,26 @@ def test_dispatch_call():
     response = handle.dispatch()
     resp = A6PrepareConfResp.Resp.GetRootAs(response.Output())
     assert resp.ConfToken() != 0
+    conf_token = resp.ConfToken()
     r.request.ty = runner_utils.RPC_HTTP_REQ_CALL
-    r.request.data = default_call_buffer(resp.ConfToken())
+    r.request.data = default_call_buffer(conf_token)
     handle = RunnerServerHandle(r)
     response = handle.dispatch()
     resp = HCResp.GetRootAsResp(response.Output())
-    assert resp.Id() == 1
+    assert resp.Id() > 0
     assert resp.ActionType() == HCAction.Rewrite
     rewrite = HCRewrite()
     rewrite.Init(resp.Action().Bytes, resp.Action().Pos)
     assert rewrite.Path() == b'/a6/python/runner'
 
-    buf = default_call_buffer()
-    r.request.data = buf
+    r.request.ty = runner_utils.RPC_HTTP_REQ_CALL
+    r.request.data = default_call_buffer(conf_token, 0)
+    handle = RunnerServerHandle(r)
+    response = handle.dispatch()
+    resp = ErrResp.GetRootAs(response.Output())
+    assert resp.Code() == ErrCode.BAD_REQUEST
+
+    r.request.data = default_call_buffer()
     handle = RunnerServerHandle(r)
     response = handle.dispatch()
     reps = ErrResp.GetRootAs(response.Output())
