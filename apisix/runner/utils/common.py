@@ -88,7 +88,7 @@ methodCodes = {
 
 def create_dict_entry(builder: flatbuffers.Builder, data: dict) -> list:
     entries = []
-    if not isinstance(data, dict) and len(data) <= 0:
+    if not isinstance(data, dict) or len(data) <= 0:
         return entries
     for key in data:
         val = data[key]
