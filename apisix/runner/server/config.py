@@ -113,8 +113,8 @@ class Config:
         if len(config_path) and os.path.exists(config_path):
             abs_path = config_path
         else:
-            abs_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        cf_path = "%s/%s" % (abs_path, config_name)
+            abs_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        cf_path = "%s/conf/%s" % (abs_path, config_name)
         if not os.path.exists(cf_path):
             print("ERR: config file `%s` not exists" % cf_path)
             exit(1)

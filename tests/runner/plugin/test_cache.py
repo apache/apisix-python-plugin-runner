@@ -29,3 +29,24 @@ def test_cache():
     assert ok
     config = get_config_by_token(token)
     assert config == cache_config
+
+
+def test_generate_token():
+    token = generate_token()
+    assert token
+
+
+def test_set_config_by_token():
+    ok = set_config_by_token(1, {})
+    assert not ok
+    ok = set_config_by_token(1, {"q": "hello"})
+    assert ok
+
+
+def test_get_config_by_token():
+    token = 1
+    data = {"q": "hello"}
+    ok = set_config_by_token(token, data)
+    assert ok
+    d = get_config_by_token(token)
+    assert d == data

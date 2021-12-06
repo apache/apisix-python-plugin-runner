@@ -14,12 +14,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import flatbuffers
-
-RPC_PREPARE_CONF = 1
-RPC_HTTP_REQ_CALL = 2
-RPC_UNKNOWN = 0
-
-
-def new_builder():
-    return flatbuffers.Builder(256)

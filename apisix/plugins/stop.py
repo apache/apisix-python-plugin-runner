@@ -42,15 +42,10 @@ class Stop(Base):
         # print(self.config)
 
         # Set response headers
-        headers = request.headers
-        headers["X-Resp-A6-Runner"] = "Python"
-        response.headers = headers
+        response.headers["X-Resp-A6-Runner"] = "Python"
 
         # Set response body
         response.body = "Hello, Python Runner of APISIX"
 
         # Set response status code
         response.status_code = 201
-
-        # Set plugin to `stop` type, default `rewrite`
-        self.stop()

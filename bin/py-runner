@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -32,7 +34,7 @@ def runner() -> None:
 
 @runner.command()
 def start() -> None:
-    config = NewConfig(os.path.dirname(os.path.abspath(__file__)))
+    config = NewConfig(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     server = NewServer(config)
     server.receive()
 

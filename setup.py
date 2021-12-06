@@ -29,7 +29,7 @@ setup(
     author="Jinchao Shuai",
     author_email="dev@apisix.apache.org",
     license="Apache 2.0",
-    python_requires=">=3.6.0",
+    python_requires=">=3.7.0",
     packages=find_packages(exclude=["tests"]),
     install_requires=requirements,
 )

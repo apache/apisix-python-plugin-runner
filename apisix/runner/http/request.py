@@ -14,30 +14,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import json
+import flatbuffers
+import apisix.runner.plugin.core as runner_plugin
+import apisix.runner.utils.common as runner_utils
+
 from ipaddress import IPv4Address
 from ipaddress import IPv6Address
-import apisix.runner.plugin.core as RunnerPlugin
-import apisix.runner.http.method as RunnerMethod
-from apisix.runner.http.protocol import RPC_HTTP_REQ_CALL
-from apisix.runner.http.protocol import RPC_PREPARE_CONF
-from a6pluginproto.HTTPReqCall import Req as A6HTTPReqCallReq
-from a6pluginproto.PrepareConf import Req as A6PrepareConfReq
+from A6.HTTPReqCall import Rewrite as HCRw
+from A6.HTTPReqCall import Action as HCAction
+from A6.HTTPReqCall import Req as HCReq
+from A6.PrepareConf import Req as PCReq
 
 
 class Request:
 
-    def __init__(self, ty: int = 0, buf: bytes = b''):
+    def __init__(self, r):
         """
         Init and parse request
-        :param ty:
-            rpc request protocol type
-        :param buf:
-            rpc request buffer data
+        :param r:
+            rpc request object
         """
-        self._rpc_type = ty
-        self._rpc_buf = buf
+        self._rpc_type = r.request.ty
+        self._rpc_buf = r.request.data
         self._req_id = 0
+        self.code = 0
         self._req_conf_token = 0
         self._req_method = ""
         self._req_path = ""
@@ -228,7 +230,7 @@ class Request:
         self._req_args = {}
         self._req_src_ip = ""
 
-    def _parse_src_ip(self, req: A6HTTPReqCallReq) -> None:
+    def _parse_src_ip(self, req: HCReq) -> None:
         """
         parse request source ip address
         :param req:
@@ -249,7 +251,7 @@ class Request:
         if ip_len == 16:
             self.src_ip = IPv6Address(ip_byte).exploded
 
-    def _parse_headers(self, req: A6HTTPReqCallReq) -> None:
+    def _parse_headers(self, req: HCReq) -> None:
         """
         parse request headers
         :param req:
@@ -263,7 +265,7 @@ class Request:
                 headers[key] = val
             self.headers = headers
 
-    def _parse_args(self, req: A6HTTPReqCallReq) -> None:
+    def _parse_args(self, req: HCReq) -> None:
         """
         parse request args
         :param req:
@@ -277,14 +279,14 @@ class Request:
                 args[key] = val
             self.args = args
 
-    def _parse_configs(self, req: A6PrepareConfReq) -> None:
+    def _parse_configs(self, req: PCReq) -> None:
         """
         parse request plugin configs
         :param req:
         :return:
         """
         if not req.ConfIsNone():
-            plugins = RunnerPlugin.loading()
+            plugins = runner_plugin.loading()
             configs = {}
             for i in range(req.ConfLength()):
                 name = str(req.Conf(i).Name(), encoding="UTF-8").lower()
@@ -302,16 +304,56 @@ class Request:
         init request handler
         :return:
         """
-        if self.rpc_type == RPC_HTTP_REQ_CALL:
-            req = A6HTTPReqCallReq.Req.GetRootAsReq(self.rpc_buf)
+        if self.rpc_type == runner_utils.RPC_HTTP_REQ_CALL:
+            req = HCReq.Req.GetRootAsReq(self.rpc_buf)
             self.id = req.Id()
-            self.method = RunnerMethod.get_name_by_code(req.Method())
+            self.method = runner_utils.get_method_name_by_code(req.Method())
             self.path = str(req.Path(), encoding="UTF-8")
             self.conf_token = req.ConfToken()
             self._parse_src_ip(req)
             self._parse_headers(req)
             self._parse_args(req)
 
-        if self.rpc_type == RPC_PREPARE_CONF:
-            req = A6PrepareConfReq.Req.GetRootAsReq(self.rpc_buf)
+        if self.rpc_type == runner_utils.RPC_PREPARE_CONF:
+            req = PCReq.Req.GetRootAsReq(self.rpc_buf)
             self._parse_configs(req)
+
+    def checked(self):
+        """
+        check request params is valid
+        :return:
+        """
+        if len(self._req_path) == 0 and len(self._req_headers) == 0 and len(self._req_args) == 0:
+            return False
+        else:
+            return True
+
+    @runner_utils.response_config
+    def config_handler(self, builder: flatbuffers.Builder):
+        return self.conf_token
+
+    @runner_utils.response_call(HCAction.Action.Rewrite)
+    def call_handler(self, builder: flatbuffers.Builder):
+        if not self.checked():
+            return None, 0
+
+        if len(self._req_path) <= 0:
+            self._req_path = "/"
+        path_vector = runner_utils.create_str_vector(builder, self._req_path)
+
+        headers_vector = runner_utils.create_dict_vector(builder, self._req_headers, HCAction.Action.Rewrite,
+                                                         runner_utils.VECTOR_TYPE_HEADER)
+
+        args_vector = runner_utils.create_dict_vector(builder, self._req_args, HCAction.Action.Rewrite,
+                                                      runner_utils.VECTOR_TYPE_QUERY)
+
+        HCRw.RewriteStart(builder)
+        HCRw.RewriteAddPath(builder, path_vector)
+        HCRw.RewriteAddHeaders(builder, headers_vector)
+        HCRw.RewriteAddArgs(builder, args_vector)
+        rewrite = HCRw.RewriteEnd(builder)
+        return rewrite, self._req_id
+
+    @runner_utils.response_unknown
+    def unknown_handler(self, builder: flatbuffers.Builder):
+        return self.code

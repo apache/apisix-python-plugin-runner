@@ -28,6 +28,8 @@ def generate_token() -> int:
 
 
 def set_config_by_token(token: int, configs: dict) -> bool:
+    if len(configs) <= 0:
+        return False
     cache_key = "%s:%s" % (RUNNER_CACHE_ENTRY, token)
     cache.update(cache_key, configs)
     return cache.has(cache_key)

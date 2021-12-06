@@ -40,7 +40,7 @@ def test_config_default():
 
 
 def test_config_custom():
-    config = NewServerConfig("%s/apisix" % os.path.abspath(os.path.join(os.getcwd())), "config.yaml")
+    config = NewServerConfig("%s" % os.path.abspath(os.path.join(os.getcwd())), "config.yaml")
 
     config.logging.level = "NOTSET"
     assert config.logging.level == logging.NOTSET
