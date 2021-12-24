@@ -32,6 +32,18 @@ RPC_UNKNOWN = 0
 
 VECTOR_TYPE_HEADER = 1
 VECTOR_TYPE_QUERY = 2
+VECTOR_TYPE_CONFIG = 3
+VECTOR_TYPE_SOURCE_IP = 4
+
+dictVectorParseFuncNames = {
+    VECTOR_TYPE_HEADER: "Headers",
+    VECTOR_TYPE_QUERY: "Args",
+    VECTOR_TYPE_CONFIG: "Conf",
+}
+
+listVectorParseFuncNames = {
+    VECTOR_TYPE_SOURCE_IP: "SrcIp",
+}
 
 A6MethodGET = "GET"
 A6MethodHEAD = "HEAD"
@@ -196,3 +208,40 @@ def response_unknown(func):
         return True
 
     return wrapper
+
+
+def parse_dict_vector(cls: object, ty: int) -> dict:
+    res = {}
+    fn = dictVectorParseFuncNames.get(ty)
+    if not fn:
+        return res
+
+    length = getattr(cls, "%sLength" % fn)()
+    if not length or length == 0:
+        return res
+
+    for i in range(length):
+        key = getattr(cls, fn)(i).Name().decode()
+        val = getattr(cls, fn)(i).Value().decode()
+        res[key] = val
+
+    return res
+
+
+def parse_list_vector(cls: object, ty: int, out_bytes: bool = False) -> list:
+    res = []
+    if out_bytes:
+        res = bytearray()
+    fn = listVectorParseFuncNames.get(ty)
+    if not fn:
+        return res
+
+    length = getattr(cls, "%sLength" % fn)()
+    if not length or length == 0:
+        return res
+
+    for i in range(length):
+        val = getattr(cls, fn)(i)
+        res.append(val)
+
+    return res
