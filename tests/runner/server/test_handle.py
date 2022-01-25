@@ -120,7 +120,7 @@ def test_dispatch_config():
     handle = RunnerServerHandle(r)
     response = handle.dispatch()
     err = ErrResp.GetRootAsResp(response.Output())
-    assert err.Code() == ErrCode.CONF_TOKEN_NOT_FOUND
+    assert err.Code() == ErrCode.BAD_REQUEST
 
     buf = default_plugin_buffer("stop")
     r.request.ty = runner_utils.RPC_PREPARE_CONF
@@ -182,4 +182,4 @@ def test_dispatch_call():
     handle = RunnerServerHandle(r)
     response = handle.dispatch()
     reps = ErrResp.GetRootAs(response.Output())
-    assert reps.Code() == ErrCode.CONF_TOKEN_NOT_FOUND
+    assert reps.Code() == ErrCode.BAD_REQUEST

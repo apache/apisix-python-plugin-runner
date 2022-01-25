@@ -51,7 +51,7 @@ clean:
 
 .PHONY: dev
 dev:
-	export PYTHONPATH=$(PWD) && python3 apisix/main.py start
+	export PYTHONPATH=$(PWD) && python3 bin/py-runner start
 
 
 .PHONY: release

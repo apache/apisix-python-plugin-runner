@@ -16,6 +16,7 @@
 #
 import os
 import importlib
+import traceback
 from pkgutil import iter_modules
 from apisix.runner.http.response import Response as HttpResponse
 from apisix.runner.http.request import Request as HttpRequest
@@ -31,10 +32,10 @@ def execute(configs: dict, r, req: HttpRequest, reps: HttpResponse) -> bool:
         try:
             plugin.filter(req, reps)
         except AttributeError as e:
-            r.log.error("execute plugin `%s`, %s" % (name, e.args.__str__()))
+            r.log.error("execute plugin `%s` AttributeError, %s" % (name, e.args.__str__()))
             return False
         except TypeError as e:
-            r.log.error("execute plugin `%s`, %s" % (name, e.args.__str__()))
+            r.log.error("execute plugin `%s` TypeError, %s" % (name, e.args.__str__()))
             return False
     return True
 
