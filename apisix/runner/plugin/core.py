@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import os
 import importlib
-import traceback
 from pkgutil import iter_modules
 from apisix.runner.http.response import Response as HttpResponse
 from apisix.runner.http.request import Request as HttpRequest

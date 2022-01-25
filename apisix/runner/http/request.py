@@ -48,7 +48,7 @@ class Request:
         self._req_args = {}
         self._req_src_ip = ""
         self._err_code = 0
-        self._init()
+        self.__init()
 
     @property
     def rpc_type(self) -> int:
@@ -211,6 +211,22 @@ class Request:
         """
         self._req_src_ip = req_src_ip
 
+    @property
+    def err_code(self) -> int:
+        """
+        get error code for request handler
+        :return:
+        """
+        return self._err_code
+
+    @err_code.setter
+    def err_code(self, err_code: int) -> None:
+        """
+        set error code for request handler
+        :return:
+        """
+        self._err_code = err_code
+
     def reset(self) -> None:
         """
         reset request handler
@@ -231,7 +247,7 @@ class Request:
         self._req_args = {}
         self._req_src_ip = ""
 
-    def _init(self) -> None:
+    def __init(self) -> None:
         """
         init request handler
         :return:
@@ -253,6 +269,7 @@ class Request:
 
             # fetch request remote_addr
             ip_list = runner_utils.parse_list_vector(req, runner_utils.VECTOR_TYPE_SOURCE_IP, True)
+            print(ip_list)
             if ip_list:
                 if len(ip_list) == 16:
                     self.src_ip = IPv6Address(bytes(ip_list)).exploded

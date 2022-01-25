@@ -62,12 +62,15 @@ def default_plugin_buffer(name: str = "stop", enable_conf: bool = True):
     return builder.Output()
 
 
-def default_call_buffer(token: int = 0, id: int = 1):
+def default_call_buffer(token: int = 0, id: int = 1, ipv6: bool = False):
     builder = runner_utils.new_builder()
     # request path
     path = builder.CreateString("/hello/python/runner")
     # request ip
-    src_ip = bytes(bytearray([127, 0, 0, 1]))
+    if ipv6:
+        src_ip = bytes(bytearray([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]))
+    else:
+        src_ip = bytes(bytearray([127, 0, 0, 1]))
     src_ip = builder.CreateByteVector(src_ip)
     # request args
     arg_k = builder.CreateString("hello")
@@ -170,6 +173,13 @@ def test_dispatch_call():
     rewrite = HCRewrite()
     rewrite.Init(resp.Action().Bytes, resp.Action().Pos)
     assert rewrite.Path() == b'/a6/python/runner'
+
+    r.request.data = default_call_buffer(conf_token, ipv6=True)
+    handle = RunnerServerHandle(r)
+    response = handle.dispatch()
+    resp = HCResp.GetRootAsResp(response.Output())
+    assert resp.Id() > 0
+    assert resp.ActionType() == HCAction.Rewrite
 
     r.request.ty = runner_utils.RPC_HTTP_REQ_CALL
     r.request.data = default_call_buffer(conf_token, 0)
