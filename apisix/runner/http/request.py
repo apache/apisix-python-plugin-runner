@@ -269,7 +269,6 @@ class Request:
 
             # fetch request remote_addr
             ip_list = runner_utils.parse_list_vector(req, runner_utils.VECTOR_TYPE_SOURCE_IP, True)
-            print(ip_list)
             if ip_list:
                 if len(ip_list) == 16:
                     self.src_ip = IPv6Address(bytes(ip_list)).exploded
