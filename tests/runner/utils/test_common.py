@@ -20,6 +20,36 @@ import apisix.runner.utils.common as runner_utils
 from apisix.runner.utils.common import VECTOR_TYPE_HEADER
 from apisix.runner.utils.common import VECTOR_TYPE_QUERY
 from A6.HTTPReqCall import Action as HCAction
+from A6.HTTPReqCall import Req as A6HTTPReqCallReq
+from A6 import TextEntry as A6TextEntry
+
+
+def get_request_buffer():
+    builder = runner_utils.new_builder()
+    # request path
+    path = builder.CreateString("/hello/python/runner")
+    # request ip
+    src_ip = builder.CreateByteVector(bytes([127, 0, 0, 1]))
+
+    # request headers
+    head_k = builder.CreateString("hello")
+    head_v = builder.CreateString("world")
+    A6TextEntry.Start(builder)
+    A6TextEntry.AddName(builder, head_k)
+    A6TextEntry.AddValue(builder, head_v)
+    headers = A6TextEntry.End(builder)
+    A6HTTPReqCallReq.StartHeadersVector(builder, 1)
+    builder.PrependUOffsetTRelative(headers)
+    headers_vec = builder.EndVector()
+
+    A6HTTPReqCallReq.Start(builder)
+    A6HTTPReqCallReq.AddId(builder, 1)
+    A6HTTPReqCallReq.AddPath(builder, path)
+    A6HTTPReqCallReq.AddSrcIp(builder, src_ip)
+    A6HTTPReqCallReq.AddHeaders(builder, headers_vec)
+    req = A6HTTPReqCallReq.End(builder)
+    builder.Finish(req)
+    return builder.Output()
 
 
 def test_get_method_code_by_name():
@@ -82,3 +112,21 @@ def test_get_vector_object():
     assert obj
     obj = runner_utils.get_vector_object(HCAction.Action.Stop, VECTOR_TYPE_QUERY)
     assert not obj
+
+
+def test_parse_dict_vector():
+    buf = get_request_buffer()
+    req = A6HTTPReqCallReq.Req.GetRootAsReq(buf)
+    parse_fail = runner_utils.parse_dict_vector(req, 0)
+    assert parse_fail == {}
+    parse_ok = runner_utils.parse_dict_vector(req, runner_utils.VECTOR_TYPE_HEADER)
+    assert parse_ok.get("hello") == "world"
+
+
+def test_parse_list_vector():
+    buf = get_request_buffer()
+    req = A6HTTPReqCallReq.Req.GetRootAsReq(buf)
+    parse_fail = runner_utils.parse_list_vector(req, 0)
+    assert parse_fail == []
+    parse_ok = runner_utils.parse_list_vector(req, runner_utils.VECTOR_TYPE_SOURCE_IP)
+    assert parse_ok == [127, 0, 0, 1]

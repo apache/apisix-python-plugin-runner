@@ -47,7 +47,8 @@ class Request:
         self._req_configs = {}
         self._req_args = {}
         self._req_src_ip = ""
-        self._init()
+        self._err_code = 0
+        self.__init()
 
     @property
     def rpc_type(self) -> int:
@@ -210,6 +211,22 @@ class Request:
         """
         self._req_src_ip = req_src_ip
 
+    @property
+    def err_code(self) -> int:
+        """
+        get error code for request handler
+        :return:
+        """
+        return self._err_code
+
+    @err_code.setter
+    def err_code(self, err_code: int) -> None:
+        """
+        set error code for request handler
+        :return:
+        """
+        self._err_code = err_code
+
     def reset(self) -> None:
         """
         reset request handler
@@ -230,93 +247,62 @@ class Request:
         self._req_args = {}
         self._req_src_ip = ""
 
-    def _parse_src_ip(self, req: HCReq) -> None:
-        """
-        parse request source ip address
-        :param req:
-        :return:
-        """
-        if req.SrcIpIsNone():
-            return
-        ip_len = req.SrcIpLength()
-        if ip_len == 0:
-            return
-        ip_arr = bytearray()
-        for i in range(ip_len):
-            ip_arr.append(req.SrcIp(i))
-        ip_byte = bytes(ip_arr)
-
-        if ip_len == 4:
-            self.src_ip = IPv4Address(ip_byte).exploded
-        if ip_len == 16:
-            self.src_ip = IPv6Address(ip_byte).exploded
-
-    def _parse_headers(self, req: HCReq) -> None:
-        """
-        parse request headers
-        :param req:
-        :return:
-        """
-        if not req.HeadersIsNone():
-            headers = {}
-            for i in range(req.HeadersLength()):
-                key = str(req.Headers(i).Name(), encoding="UTF-8")
-                val = str(req.Headers(i).Value(), encoding="UTF-8")
-                headers[key] = val
-            self.headers = headers
-
-    def _parse_args(self, req: HCReq) -> None:
-        """
-        parse request args
-        :param req:
-        :return:
-        """
-        if not req.ArgsIsNone():
-            args = {}
-            for i in range(req.ArgsLength()):
-                key = str(req.Args(i).Name(), encoding="UTF-8")
-                val = str(req.Args(i).Value(), encoding="UTF-8")
-                args[key] = val
-            self.args = args
-
-    def _parse_configs(self, req: PCReq) -> None:
-        """
-        parse request plugin configs
-        :param req:
-        :return:
-        """
-        if not req.ConfIsNone():
-            plugins = runner_plugin.loading()
-            configs = {}
-            for i in range(req.ConfLength()):
-                name = str(req.Conf(i).Name(), encoding="UTF-8").lower()
-                plugin = plugins.get(name)
-                if not plugin:
-                    continue
-                value = str(req.Conf(i).Value(), encoding="UTF-8")
-                plugin = plugin()
-                plugin.config = json.loads(value)
-                configs[name] = plugin
-            self.configs = configs
-
-    def _init(self) -> None:
+    def __init(self) -> None:
         """
         init request handler
         :return:
         """
         if self.rpc_type == runner_utils.RPC_HTTP_REQ_CALL:
             req = HCReq.Req.GetRootAsReq(self.rpc_buf)
+
+            # fetch request id
             self.id = req.Id()
-            self.method = runner_utils.get_method_name_by_code(req.Method())
-            self.path = str(req.Path(), encoding="UTF-8")
+
+            # fetch request conf token
             self.conf_token = req.ConfToken()
-            self._parse_src_ip(req)
-            self._parse_headers(req)
-            self._parse_args(req)
+
+            # fetch request uri
+            self.path = req.Path().decode()
+
+            # fetch request method
+            self.method = runner_utils.get_method_name_by_code(req.Method())
+
+            # fetch request remote_addr
+            ip_list = runner_utils.parse_list_vector(req, runner_utils.VECTOR_TYPE_SOURCE_IP, True)
+            if ip_list:
+                if len(ip_list) == 16:
+                    self.src_ip = IPv6Address(bytes(ip_list)).exploded
+                else:
+                    self.src_ip = IPv4Address(bytes(ip_list)).exploded
+
+            # fetch request headers
+            hdr_dict = runner_utils.parse_dict_vector(req, runner_utils.VECTOR_TYPE_HEADER)
+            if hdr_dict:
+                self.headers = hdr_dict
+
+            # fetch request args
+            arg_dict = runner_utils.parse_dict_vector(req, runner_utils.VECTOR_TYPE_QUERY)
+            if arg_dict:
+                self.args = arg_dict
 
         if self.rpc_type == runner_utils.RPC_PREPARE_CONF:
             req = PCReq.Req.GetRootAsReq(self.rpc_buf)
-            self._parse_configs(req)
+            if req.ConfIsNone():
+                return
+
+            # loading plugin
+            plugins = runner_plugin.loading()
+            configs = {}
+            for i in range(req.ConfLength()):
+                name = str(req.Conf(i).Name().decode()).lower()
+                plugin = plugins.get(name)
+                if not plugin:
+                    continue
+                value = req.Conf(i).Value().decode()
+                plugin = plugin()
+                plugin.config = json.loads(value)
+                configs[name] = plugin
+            self.configs = configs
 
     def checked(self):
         """
@@ -356,4 +342,4 @@ class Request:
 
     @runner_utils.response_unknown
     def unknown_handler(self, builder: flatbuffers.Builder):
-        return self.code
+        return self._err_code

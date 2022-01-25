@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import os
 import importlib
 from pkgutil import iter_modules
@@ -31,10 +32,10 @@ def execute(configs: dict, r, req: HttpRequest, reps: HttpResponse) -> bool:
         try:
             plugin.filter(req, reps)
         except AttributeError as e:
-            r.log.error("execute plugin `%s`, %s" % (name, e.args.__str__()))
+            r.log.error("execute plugin `%s` AttributeError, %s" % (name, e.args.__str__()))
             return False
         except TypeError as e:
-            r.log.error("execute plugin `%s`, %s" % (name, e.args.__str__()))
+            r.log.error("execute plugin `%s` TypeError, %s" % (name, e.args.__str__()))
             return False
     return True
 

@@ -39,6 +39,7 @@ def test_request_unknown_handler():
 
 def test_request_config_handler():
     builder = runner_utils.new_builder()
+
     r = default_request()
     req = RunnerHttpRequest(r)
     req.conf_token = 0
@@ -90,6 +91,8 @@ def test_request_handler():
     assert req.args == {"hello": "Python"}
     req.src_ip = "127.0.0.1"
     assert req.src_ip == "127.0.0.1"
+    req.err_code = 400
+    assert req.err_code == 400
     req.reset()
     assert req.rpc_type == 0
     assert req.rpc_buf == b''
