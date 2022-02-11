@@ -18,12 +18,32 @@
 import socket
 import logging
 
+from apisix.runner.plugin.core import PluginBase
 from apisix.runner.plugin.core import PluginProcess
 from apisix.runner.plugin.core import PLUGINS
 from apisix.runner.server.logger import Logger as RunnerServerLogger
 from apisix.runner.server.server import RPCRequest as RunnerRPCRequest
 from apisix.runner.http.request import Request as NewHttpRequest
 from apisix.runner.http.response import Response as NewHttpResponse
+
+
+class NonePlugin:
+    pass
+
+
+class ErrorPlugin:
+
+    def config(self, conf):
+        return conf
+
+    def filter(self, conf, req, reps):
+        raise RuntimeError("Runtime Error")
+
+
+def default_request():
+    sock = socket.socket()
+    logger = RunnerServerLogger(logging.INFO)
+    return RunnerRPCRequest(sock, logger)
 
 
 def test_process_register():
@@ -33,9 +53,7 @@ def test_process_register():
 
 
 def test_process_execute():
-    sock = socket.socket()
-    logger = RunnerServerLogger(logging.INFO)
-    r = RunnerRPCRequest(sock, logger)
+    r = default_request()
     request = NewHttpRequest(r)
     response = NewHttpResponse()
     tests = [
@@ -57,24 +75,51 @@ def test_process_execute():
             "resp": response,
             "expected": True
         },
+        # AnyError
         {
             "conf": {
-                "none": "config"
+                "any": "config"
+            },
+            "plugins": {
+                "any": ErrorPlugin
             },
             "autoload": False,
             "expected": False
         },
+        # AttributeError
+        {
+            "conf": {
+                "attr": "config"
+            },
+            "plugins": {
+                "attr": NonePlugin
+            },
+            "autoload": False,
+            "expected": False
+        },
+        # TypeError
         {
             "conf": {
                 "none": "config"
             },
             "autoload": True,
             "expected": False
-        }
+        },
     ]
 
     for test in tests:
         if test.get("autoload"):
             PluginProcess.register()
+        if test.get("plugins"):
+            for plg_name, plg_obj in test.get("plugins").items():
+                PLUGINS[plg_name] = plg_obj
         res = PluginProcess.execute(test.get("conf"), r, test.get("req"), test.get("resp"))
         assert res == test.get("expected")
+
+
+def test_base():
+    r = default_request()
+    pb = PluginBase()
+    assert pb.name() is None
+    assert pb.config(None) is None
+    assert pb.filter(None, NewHttpRequest(r), NewHttpResponse()) is None
