@@ -16,7 +16,7 @@
 #
 
 import flatbuffers
-import apisix.runner.plugin.core as runner_plugin
+from apisix.runner.plugin.core import PluginProcess as RunnerPlugin
 import apisix.runner.plugin.cache as runner_cache
 import apisix.runner.utils.common as runner_utils
 from apisix.runner.http.response import Response as NewHttpResponse
@@ -80,7 +80,7 @@ class Handle:
             resp.id = req.id
 
             # execute plugins
-            ok = runner_plugin.execute(configs, self.r, req, resp)
+            ok = RunnerPlugin.execute(configs, self.r, req, resp)
             if not ok:
                 req.code = ErrCode.SERVICE_UNAVAILABLE
                 req.unknown_handler(builder)

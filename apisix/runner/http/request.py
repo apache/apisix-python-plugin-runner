@@ -15,9 +15,7 @@
 # limitations under the License.
 #
 
-import json
 import flatbuffers
-import apisix.runner.plugin.core as runner_plugin
 import apisix.runner.utils.common as runner_utils
 
 from ipaddress import IPv4Address
@@ -290,18 +288,12 @@ class Request:
             if req.ConfIsNone():
                 return
 
-            # loading plugin
-            plugins = runner_plugin.loading()
             configs = {}
             for i in range(req.ConfLength()):
-                name = str(req.Conf(i).Name().decode()).lower()
-                plugin = plugins.get(name)
-                if not plugin:
-                    continue
-                value = req.Conf(i).Value().decode()
-                plugin = plugin()
-                plugin.config = json.loads(value)
-                configs[name] = plugin
+                # fetch request config
+                name = req.Conf(i).Name().decode()
+                config = req.Conf(i).Value().decode()
+                configs[name] = config
             self.configs = configs
 
     def checked(self):

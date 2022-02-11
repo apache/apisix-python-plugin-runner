@@ -15,63 +15,66 @@
 # limitations under the License.
 #
 
-import os
 import socket
 import logging
-from pkgutil import iter_modules
 
-from apisix.runner.plugin.core import loading as plugin_loading
-from apisix.runner.plugin.core import execute as plugin_execute
+from apisix.runner.plugin.core import PluginProcess
+from apisix.runner.plugin.core import PLUGINS
 from apisix.runner.server.logger import Logger as RunnerServerLogger
 from apisix.runner.server.server import RPCRequest as RunnerRPCRequest
 from apisix.runner.http.request import Request as NewHttpRequest
 from apisix.runner.http.response import Response as NewHttpResponse
 
 
-def test_loading():
-    configs = plugin_loading()
-    assert isinstance(configs, dict)
-    config_keys = configs.keys()
-    path = "%s/plugins" % os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    modules = iter_modules(path=[path])
-    for _, name, _ in modules:
-        assert name in config_keys
+def test_process_register():
+    assert PLUGINS == {}
+    PluginProcess.register()
+    assert len(PLUGINS) == 2
 
 
-def test_execute():
+def test_process_execute():
     sock = socket.socket()
     logger = RunnerServerLogger(logging.INFO)
     r = RunnerRPCRequest(sock, logger)
     request = NewHttpRequest(r)
     response = NewHttpResponse()
-    configs = plugin_loading()
-    for p_name in configs:
-        configs[p_name] = configs.get(p_name)()
-    ok = plugin_execute(configs, r, request, response)
-    assert ok
-    # stop plugin
-    assert response.headers.get("X-Resp-A6-Runner") == "Python"
-    assert response.body == "Hello, Python Runner of APISIX"
-    assert response.status_code == 201
-    # rewrite plugin
-    assert request.headers.get("X-Resp-A6-Runner") == "Python"
-    assert request.args.get("a6_runner") == "Python"
-    assert request.path == "/a6/python/runner"
-    configs = {"test": {}}
-    ok = plugin_execute(configs, r, request, response)
-    assert not ok
+    tests = [
+        {
+            "conf": {
+                "stop": "config"
+            },
+            "autoload": True,
+            "req": request,
+            "resp": response,
+            "expected": True
+        },
+        {
+            "conf": {
+                "rewrite": "config"
+            },
+            "autoload": True,
+            "req": request,
+            "resp": response,
+            "expected": True
+        },
+        {
+            "conf": {
+                "none": "config"
+            },
+            "autoload": False,
+            "expected": False
+        },
+        {
+            "conf": {
+                "none": "config"
+            },
+            "autoload": True,
+            "expected": False
+        }
+    ]
 
-    class AttributeErrorExample:
-        pass
-
-    configs = {AttributeErrorExample.__name__.lower(): AttributeErrorExample()}
-    ok = plugin_execute(configs, r, request, response)
-    assert not ok
-
-    class TypeErrorExample:
-        def __init__(self):
-            self.filter = 10
-
-    configs = {TypeErrorExample.__name__.lower(): TypeErrorExample()}
-    ok = plugin_execute(configs, r, request, response)
-    assert not ok
+    for test in tests:
+        if test.get("autoload"):
+            PluginProcess.register()
+        res = PluginProcess.execute(test.get("conf"), r, test.get("req"), test.get("resp"))
+        assert res == test.get("expected")

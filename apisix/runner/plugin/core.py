@@ -17,38 +17,82 @@
 
 import os
 import importlib
+from typing import Any
 from pkgutil import iter_modules
 from apisix.runner.http.response import Response as HttpResponse
 from apisix.runner.http.request import Request as HttpRequest
 
-
-def execute(configs: dict, r, req: HttpRequest, reps: HttpResponse) -> bool:
-    for name in configs:
-        plugin = configs.get(name)
-        if type(plugin).__name__.lower() != name.lower():
-            r.log.error("execute plugin `%s`, plugin handler is not object" % name)
-            return False
-
-        try:
-            plugin.filter(req, reps)
-        except AttributeError as e:
-            r.log.error("execute plugin `%s` AttributeError, %s" % (name, e.args.__str__()))
-            return False
-        except TypeError as e:
-            r.log.error("execute plugin `%s` TypeError, %s" % (name, e.args.__str__()))
-            return False
-    return True
+PLUGINS = {}
 
 
-def loading() -> dict:
-    path = "%s/plugins" % os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    modules = iter_modules(path=[path])
-    plugins = {}
+class PluginBase:
 
-    for loader, moduleName, _ in modules:
-        classNameConversion = list(map(lambda name: name.capitalize(), moduleName.split("_")))
-        className = "".join(classNameConversion)
-        classInstance = getattr(importlib.import_module("apisix.plugins.%s" % moduleName), className)
-        plugins[str(moduleName).lower()] = classInstance
+    def __init_subclass__(cls: Any, **kwargs):
+        """
+        register plugin object
+        :param kwargs:
+        :return:
+        """
+        name = cls.name(cls)
+        if name not in PLUGINS:
+            PLUGINS[name] = cls
 
-    return plugins
+    def name(self) -> str:
+        """
+        fetching plugin name
+        :return:
+        """
+        pass
+
+    def config(self, conf: Any) -> Any:
+        """
+        parsing plugin configuration
+        :return:
+        """
+        pass
+
+    def filter(self, conf: Any, req: HttpRequest, reps: HttpResponse) -> None:
+        """
+        execute plugin handler
+        :param conf:  plugin configuration
+        :param req:   request object
+        :param reps:  response object
+        :return:
+        """
+        pass
+
+
+class PluginProcess:
+    """
+    plugin default package name
+    """
+    package = "apisix.plugins"
+
+    @staticmethod
+    def register():
+        plugin_path = "%s/%s" % (os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
+                                 PluginProcess.package.replace(".", "/"))
+        modules = iter_modules(path=[plugin_path])
+        for _, mod_name, _ in modules:
+            importlib.import_module("%s.%s" % (PluginProcess.package, mod_name))
+
+    @staticmethod
+    def execute(configs: dict, r, req: HttpRequest, reps: HttpResponse):
+        for name, conf in configs.items():
+            try:
+                p = PLUGINS.get(name)()
+                conf = p.config(conf)
+                p.filter(conf, req, reps)
+            except AttributeError as e:
+                r.log.error("execute plugin `%s` AttributeError, %s" % (name, e.args.__str__()))
+                return False
+            except TypeError as e:
+                r.log.error("execute plugin `%s` TypeError, %s" % (name, e.args.__str__()))
+                return False
+            except BaseException as e:
+                r.log.error("execute plugin `%s` AnyError, %s" % (name, e.args.__str__()))
+                return False
+            else:
+                if reps.changed():
+                    break
+        return True

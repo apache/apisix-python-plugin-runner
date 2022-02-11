@@ -20,8 +20,9 @@
 import os
 import click
 
-from apisix.runner.server.server import Server as NewServer
-from apisix.runner.server.config import Config as NewConfig
+from apisix.runner.server.server import Server as RunnerServer
+from apisix.runner.server.config import Config as RunnerConfig
+from apisix.runner.plugin.core import PluginProcess as RunnerPlugin
 
 RUNNER_VERSION = "0.1.0"
 
@@ -34,8 +35,9 @@ def runner() -> None:
 
 @runner.command()
 def start() -> None:
-    config = NewConfig(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    server = NewServer(config)
+    RunnerPlugin.register()
+    config = RunnerConfig(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    server = RunnerServer(config)
     server.receive()
 
 
