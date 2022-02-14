@@ -54,10 +54,10 @@ class Stop(PluginBase):
         # print(conf)
 
         # Set response headers
-        response.headers["X-Resp-A6-Runner"] = "Python"
+        response.set_header("X-Resp-A6-Runner", "Python")
 
         # Set response body
-        response.body = "Hello, Python Runner of APISIX"
+        response.set_body("Hello, Python Runner of APISIX")
 
         # Set response status code
-        response.status_code = 201
+        response.set_status_code(201)

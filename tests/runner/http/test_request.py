@@ -42,10 +42,10 @@ def test_request_config_handler():
 
     r = default_request()
     req = RunnerHttpRequest(r)
-    req.conf_token = 0
+    req.set_conf_token(0)
     ok = req.config_handler(builder)
     assert not ok
-    req.conf_token = 1
+    req.set_conf_token(1)
     ok = req.config_handler(builder)
     assert ok
 
@@ -54,16 +54,17 @@ def test_request_call_handler():
     builder = runner_utils.new_builder()
     r = default_request()
     req = RunnerHttpRequest(r)
-    req.path = ""
-    req.headers = {}
-    req.args = {}
+    req.set_uri("")
+    req.set_headers({})
+    req.set_args({})
     ok = req.call_handler(builder)
     assert not ok
-    req.headers["X-Hello"] = "World"
-    req.id = 1
+    req.set_header("X-Hello", "World")
+    req.set_id(1)
     ok = req.call_handler(builder)
     assert ok
-    req.path = "/hello"
+    req.set_uri("/hello")
+    req.set_id(1)
     ok = req.call_handler(builder)
     assert ok
 
@@ -71,36 +72,17 @@ def test_request_call_handler():
 def test_request_handler():
     r = default_request()
     req = RunnerHttpRequest(r)
-    req.id = 1000
-    assert req.id == 1000
-    req.rpc_type = runner_utils.RPC_UNKNOWN
-    assert req.rpc_type == runner_utils.RPC_UNKNOWN
-    req.rpc_buf = b'hello'
-    assert req.rpc_buf == b'hello'
-    req.conf_token = 10
-    assert req.conf_token == 10
-    req.method = "GET"
-    assert req.method == "GET"
-    req.path = "/hello"
-    assert req.path == "/hello"
-    req.headers = {"X-HELLO": "Python"}
-    assert req.headers == {"X-HELLO": "Python"}
-    req.configs = {"hello": "Python"}
-    assert req.configs == {"hello": "Python"}
-    req.args = {"hello": "Python"}
-    assert req.args == {"hello": "Python"}
-    req.src_ip = "127.0.0.1"
-    assert req.src_ip == "127.0.0.1"
-    req.err_code = 400
-    assert req.err_code == 400
-    req.reset()
-    assert req.rpc_type == 0
-    assert req.rpc_buf == b''
-    assert req.id == 0
-    assert req.conf_token == 0
-    assert req.method == ""
-    assert req.path == ""
-    assert req.headers == {}
-    assert req.configs == {}
-    assert req.args == {}
-    assert req.src_ip == ""
+    req.set_id(10)
+    assert req.get_id() == 10
+    req.set_conf_token(10)
+    assert req.get_conf_token() == 10
+    req.set_method("GET")
+    assert req.get_method() == "GET"
+    req.set_uri("/hello")
+    assert req.get_uri() == "/hello"
+    req.set_headers({"X-HELLO": "Python"})
+    assert req.get_headers() == {"X-HELLO": "Python"}
+    req.set_config("hello", "Python")
+    assert req.get_configs() == {"hello": "Python"}
+    req.set_args({"hello": "Python"})
+    assert req.get_args() == {"hello": "Python"}

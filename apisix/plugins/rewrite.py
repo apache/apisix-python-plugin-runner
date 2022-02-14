@@ -54,10 +54,10 @@ class Rewrite(PluginBase):
         # print(conf)
 
         # Rewrite request headers
-        request.headers["X-Resp-A6-Runner"] = "Python"
+        request.set_header("X-Resp-A6-Runner", "Python")
 
         # Rewrite request args
-        request.args["a6_runner"] = "Python"
+        request.set_arg("a6_runner", "Python")
 
         # Rewrite request path
-        request.path = "/a6/python/runner"
+        request.set_uri("/a6/python/runner")

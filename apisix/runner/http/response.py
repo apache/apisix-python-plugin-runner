@@ -28,226 +28,139 @@ PLUGIN_ACTION_REWRITE = HCAction.Action.Rewrite
 
 class Response:
 
-    def __init__(self, ty: int = 0):
+    def __init__(self):
         """
         Init and parse request
-        :param ty:
-            rpc request protocol type
         """
-        self.rpc_type = ty
-        self._resp_id = 0
-        self._resp_token = 0
-        self._resp_body = ""
-        self._resp_path = ""
-        self._resp_args = {}
-        self._resp_headers = {}
-        self._resp_status_code = 0
-        self._resp_error_code = 0
-        self._resp_action_type = 0
 
-    @property
-    def rpc_type(self) -> int:
+        # response attribute
+        self.__body = ""
+        self.__headers = {}
+        self.__status_code = 0
+
+        # custom attribute
+        self.__req_id = 0
+
+    def get_header(self, key: str) -> str:
         """
-        get protocol type for response handler
+        get response header
+        :param key:
         :return:
         """
-        return self._rpc_type
+        return self.__headers.get(key)
 
-    @rpc_type.setter
-    def rpc_type(self, rpc_type: int) -> None:
+    def set_header(self, key: str, value: str) -> bool:
         """
-        set protocol type for response handler
+        set response header
+        :param key:
+        :param value:
         :return:
         """
-        self._rpc_type = rpc_type
+        if key and value:
+            self.__headers[key] = value
+            return True
+        return False
 
-    @property
-    def id(self) -> int:
+    def get_headers(self) -> dict:
         """
-        get request id for response handler
+        get response headers
         :return:
         """
-        return self._resp_id
+        return self.__headers
 
-    @id.setter
-    def id(self, resp_id: int) -> None:
+    def set_headers(self, headers: dict) -> bool:
         """
-        set request id for response handler
+        get response headers
+        :param headers:
         :return:
         """
-        self._resp_id = resp_id
+        if headers:
+            self.__headers = headers
+            return True
+        return False
 
-    @property
-    def token(self) -> int:
+    def get_body(self) -> str:
         """
-        get token for response handler
+        get response body
         :return:
         """
-        return self._resp_token
+        return self.__body
 
-    @token.setter
-    def token(self, resp_token: int) -> None:
+    def set_body(self, body: str) -> bool:
         """
-        set token for response handler
+        get response body
         :return:
         """
-        self._resp_token = resp_token
+        if body:
+            self.__body = body
+            return True
+        return False
 
-    @property
-    def body(self) -> str:
+    def get_status_code(self) -> int:
         """
-        get body for response handler
+        get response status code
         :return:
         """
-        return self._resp_body
+        return self.__status_code or 200
 
-    @body.setter
-    def body(self, resp_body: str) -> None:
+    def set_status_code(self, status_code: int) -> bool:
         """
-        set body for response handler
+        set response status code
+        :param status_code:
         :return:
         """
-        self._resp_body = resp_body
+        if status_code and (status_code >= 100 or status_code <= 599):
+            self.__status_code = status_code
+            return True
+        return False
 
-    @property
-    def path(self) -> str:
+    def get_req_id(self) -> int:
         """
-        get path for response handler
+        get request id
         :return:
         """
-        return self._resp_path
+        return self.__req_id
 
-    @path.setter
-    def path(self, resp_path: str) -> None:
+    def set_req_id(self, req_id: int) -> bool:
         """
-        set path for response handler
+        set request id
+        :param req_id:
         :return:
         """
-        self._resp_path = resp_path
-
-    @property
-    def args(self) -> dict:
-        """
-        get args for response handler
-        :return:
-        """
-        return self._resp_args
-
-    @args.setter
-    def args(self, resp_args: dict) -> None:
-        """
-        set args for response handler
-        :return:
-        """
-        self._resp_args = resp_args
-
-    @property
-    def headers(self) -> dict:
-        """
-        get headers for response handler
-        :return:
-        """
-        return self._resp_headers
-
-    @headers.setter
-    def headers(self, resp_headers: dict) -> None:
-        """
-        set headers for response handler
-        :return:
-        """
-        self._resp_headers = resp_headers
-
-    @property
-    def status_code(self) -> int:
-        """
-        get status code for response handler
-        :return:
-        """
-        return self._resp_status_code
-
-    @status_code.setter
-    def status_code(self, resp_status_code: int) -> None:
-        """
-        set status code for response handler
-        :return:
-        """
-        self._resp_status_code = resp_status_code
-
-    @property
-    def error_code(self) -> int:
-        """
-        get error code for response handler
-        :return:
-        """
-        return self._resp_error_code
-
-    @error_code.setter
-    def error_code(self, resp_error_code: int = 0) -> None:
-        """
-        set error code for response handler
-        :return:
-        """
-        self._resp_error_code = resp_error_code
-
-    @property
-    def action_type(self):
-        """
-        get action type for response handler
-        :return:
-        """
-        return self._resp_action_type
-
-    @action_type.setter
-    def action_type(self, action_type: int = 0) -> None:
-        """
-        set action type for response handler
-        :param action_type:
-        :return:
-        """
-        self._resp_action_type = action_type
-
-    def reset(self) -> None:
-        """
-        reset response handler
-        :return:
-        """
-        self._rpc_type = 0
-        self._resp_id = 0
-        self._resp_token = 0
-        self._resp_body = ""
-        self._resp_path = ""
-        self._resp_args = {}
-        self._resp_headers = {}
-        self._resp_status_code = 0
-        self._resp_error_code = 0
-        self._resp_action_type = 0
+        if req_id:
+            self.__req_id = req_id
+            return True
+        return False
 
     def changed(self) -> bool:
         """
         check response handler is change
         :return:
         """
-        if self.body or self.headers or self.status_code or self.token or self.error_code:
+        if self.__body or self.__headers or self.__status_code:
             return True
         else:
             return False
 
     @runner_utils.response_call(HCAction.Action.Stop)
     def call_handler(self, builder: flatbuffers.Builder):
+        """
+        get http call response
+        :param builder:
+        :return:
+        """
         if not self.changed():
             return None, 0
-        headers_vector = runner_utils.create_dict_vector(builder, self.headers, HCAction.Action.Stop,
+        headers_vector = runner_utils.create_dict_vector(builder, self.get_headers(), HCAction.Action.Stop,
                                                          runner_utils.VECTOR_TYPE_HEADER)
 
-        body_vector = runner_utils.create_str_vector(builder, self.body)
+        body_vector = runner_utils.create_str_vector(builder, self.get_body())
 
-        status_code = 200
-        if self.status_code > 0:
-            status_code = self.status_code
+        status_code = self.get_status_code()
 
         HCStop.StopStart(builder)
         HCStop.StopAddStatus(builder, status_code)
         HCStop.StopAddBody(builder, body_vector)
         HCStop.StopAddHeaders(builder, headers_vector)
         stop = HCStop.StopEnd(builder)
-        return stop, self.id
+        return stop, self.get_req_id()
