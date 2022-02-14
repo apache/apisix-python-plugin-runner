@@ -15,31 +15,43 @@
 # limitations under the License.
 #
 
-from apisix.runner.plugin.base import Base
+from typing import Any
 from apisix.runner.http.request import Request
 from apisix.runner.http.response import Response
+from apisix.runner.plugin.core import PluginBase
 
 
-class Rewrite(Base):
-    def __init__(self):
+class Rewrite(PluginBase):
+
+    def name(self) -> str:
         """
-        Examples of `rewrite` type plugins, features:
-            This type of plugin can customize the request `args`, `header`, and `path`
-            This type of plugin does not interrupt the request
+        The name of the plugin registered in the runner
+        :return:
         """
-        super(Rewrite, self).__init__(self.__class__.__name__)
+        return "rewrite"
 
-    def filter(self, request: Request, response: Response):
+    def config(self, conf: Any) -> Any:
+        """
+        Parse plugin configuration
+        :param conf:
+        :return:
+        """
+        return conf
+
+    def filter(self, conf: Any, request: Request, response: Response):
         """
         The plugin executes the main function
+        :param conf:
+            plugin configuration after parsing
         :param request:
             request parameters and information
         :param response:
             response parameters and information
         :return:
         """
-        # Get plugin configuration information through `self.config`
-        # print(self.config)
+
+        # print plugin configuration
+        # print(conf)
 
         # Rewrite request headers
         request.headers["X-Resp-A6-Runner"] = "Python"

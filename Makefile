@@ -43,7 +43,7 @@ lint: clean
 
 .PHONY: clean
 clean:
-	rm -rf apache_apisix.egg-info dist build .coverage
+	rm -rf apache_apisix.egg-info dist build assets .coverage report.html
 	find . -name "__pycache__" -exec rm -r {} +
 	find . -name ".pytest_cache" -exec rm -r {} +
 	find . -name "*.pyc" -exec rm -r {} +

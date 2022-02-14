@@ -16,7 +16,7 @@
 #
 
 import flatbuffers
-import apisix.runner.plugin.core as runner_plugin
+from apisix.runner.plugin.core import PluginProcess as runner_plugin
 import apisix.runner.plugin.cache as runner_cache
 import apisix.runner.utils.common as runner_utils
 from apisix.runner.http.response import Response as NewHttpResponse
