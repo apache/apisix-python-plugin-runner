@@ -31,12 +31,32 @@ def test_response_call_handler():
 
 
 def test_response_handler():
+    default_key = "hello"
+    default_val = "world"
+    default_empty_str = ""
+    default_empty_dict = {}
+    default_num_zero = 0
+    default_id = 1000
+    default_code = 200
+
     resp = RunnerHttpResponse()
-    resp.set_header("X-HELLO", "Python")
-    assert resp.get_headers() == {"X-HELLO": "Python"}
-    resp.set_body("Hello, Python")
-    assert resp.get_body() == "Hello, Python"
-    resp.set_req_id(1000)
-    assert resp.get_req_id() == 1000
-    resp.set_status_code(200)
-    assert resp.get_status_code() == 200
+
+    assert not resp.set_header(default_key, default_empty_str)
+    assert resp.set_header(default_key, default_val)
+    assert resp.get_header(default_key) == default_val
+
+    assert not resp.set_headers(default_empty_dict)
+    assert resp.set_headers({default_key: default_val})
+    assert resp.get_headers() == {default_key: default_val}
+
+    assert not resp.set_body(default_empty_str)
+    assert resp.set_body(default_val)
+    assert resp.get_body() == default_val
+
+    assert not resp.set_req_id(0)
+    assert resp.set_req_id(default_id)
+    assert resp.get_req_id() == default_id
+
+    assert not resp.set_status_code(default_num_zero)
+    assert resp.set_status_code(default_code)
+    assert resp.get_status_code() == default_code

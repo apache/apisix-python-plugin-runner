@@ -70,19 +70,59 @@ def test_request_call_handler():
 
 
 def test_request_handler():
+    default_key = "hello"
+    default_val = "world"
+    default_empty_str = ""
+    default_empty_dict = {}
+    default_id = 1000
+    default_token = 1
+    default_uri = "/hello"
+    default_method = "GET"
+    default_ip = "127.0.0.1"
+
     r = default_request()
     req = RunnerHttpRequest(r)
-    req.set_id(10)
-    assert req.get_id() == 10
-    req.set_conf_token(10)
-    assert req.get_conf_token() == 10
-    req.set_method("GET")
-    assert req.get_method() == "GET"
-    req.set_uri("/hello")
-    assert req.get_uri() == "/hello"
-    req.set_headers({"X-HELLO": "Python"})
-    assert req.get_headers() == {"X-HELLO": "Python"}
-    req.set_config("hello", "Python")
-    assert req.get_configs() == {"hello": "Python"}
-    req.set_args({"hello": "Python"})
-    assert req.get_args() == {"hello": "Python"}
+
+    assert not req.set_id(0)
+    assert req.set_id(default_id)
+    assert req.get_id() == default_id
+
+    assert not req.set_conf_token(0)
+    assert req.set_conf_token(default_token)
+    assert req.get_conf_token() == default_token
+
+    assert not req.set_method(default_key)
+    assert req.set_method(default_method)
+    assert req.get_method() == default_method
+
+    assert not req.set_uri(default_key)
+    assert req.set_uri(default_uri)
+    assert req.get_uri() == default_uri
+
+    assert not req.set_header(default_key, default_empty_str)
+    assert req.set_header(default_key, default_val)
+    assert req.get_header(default_key) == default_val
+
+    assert not req.set_headers(default_empty_dict)
+    assert req.set_headers({default_key: default_val})
+    assert req.get_headers() == {default_key: default_val}
+
+    assert not req.set_config(default_key, default_empty_str)
+    assert req.set_config(default_key, default_val)
+    assert req.get_config(default_key) == default_val
+
+    assert not req.set_configs(default_empty_dict)
+    assert req.set_configs({default_key: default_val})
+    assert req.get_configs() == {default_key: default_val}
+
+    assert not req.set_arg(default_key, default_empty_str)
+    assert req.set_arg(default_key, default_val)
+    assert req.get_arg(default_key) == default_val
+
+    assert not req.set_args(default_empty_dict)
+    assert req.set_args({default_key: default_val})
+    assert req.get_args() == {default_key: default_val}
+
+    assert not req.set_remote_addr(default_empty_str)
+    assert req.set_remote_addr(default_ip)
+    assert req.get_remote_addr() == default_ip

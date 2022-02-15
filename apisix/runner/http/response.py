@@ -109,7 +109,7 @@ class Response:
         :param status_code:
         :return:
         """
-        if status_code and (status_code >= 100 or status_code <= 599):
+        if status_code and (100 <= status_code <= 599):
             self.__status_code = status_code
             return True
         return False

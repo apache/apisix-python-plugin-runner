@@ -206,7 +206,8 @@ class Request:
         :param method:
         :return:
         """
-        if method:
+        # support common request method setting
+        if method and method.upper() in ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH"]:
             self.__method = method
             return True
         return False
@@ -230,12 +231,30 @@ class Request:
             return True
         return False
 
+    def get_config(self, key: str) -> str:
+        """
+        get plugin config
+        :param key:
+        :return:
+        """
+        return self.__configs.get(key)
+
     def get_configs(self) -> dict:
         """
         get plugin configs
         :return:
         """
         return self.__configs
+
+    def set_configs(self, configs: dict) -> bool:
+        """
+        set plugin configs
+        :return:
+        """
+        if configs:
+            self.__configs = configs
+            return True
+        return False
 
     def __init(self) -> None:
         """
