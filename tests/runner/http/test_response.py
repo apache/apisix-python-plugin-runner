@@ -22,44 +22,41 @@ from apisix.runner.http.response import Response as RunnerHttpResponse
 def test_response_call_handler():
     builder = runner_utils.new_builder()
     resp = RunnerHttpResponse()
-    resp.id = 1
+    resp.set_req_id(1)
     ok = resp.call_handler(builder)
     assert not ok
-    resp.body = "Hello Python Runner"
+    resp.set_body("Hello Python Runner")
     ok = resp.call_handler(builder)
     assert ok
 
 
 def test_response_handler():
+    default_key = "hello"
+    default_val = "world"
+    default_empty_str = ""
+    default_empty_dict = {}
+    default_num_zero = 0
+    default_id = 1000
+    default_code = 200
+
     resp = RunnerHttpResponse()
-    resp.rpc_type = runner_utils.RPC_UNKNOWN
-    assert resp.rpc_type == runner_utils.RPC_UNKNOWN
-    resp.token = 1000
-    assert resp.token == 1000
-    resp.headers = {"X-HELLO": "Python"}
-    assert resp.headers == {"X-HELLO": "Python"}
-    resp.body = "Hello, Python"
-    assert resp.body == "Hello, Python"
-    resp.args = {"hello": "Python"}
-    assert resp.args == {"hello": "Python"}
-    resp.path = "/hello"
-    assert resp.path == "/hello"
-    resp.id = 1000
-    assert resp.id == 1000
-    resp.status_code = 200
-    assert resp.status_code == 200
-    resp.error_code = 1
-    assert resp.error_code == 1
-    resp.action_type = 10
-    assert resp.action_type == 10
-    resp.reset()
-    assert resp.rpc_type == 0
-    assert resp.id == 0
-    assert resp.token == 0
-    assert resp.body == ""
-    assert resp.path == ""
-    assert resp.args == {}
-    assert resp.headers == {}
-    assert resp.status_code == 0
-    assert resp.error_code == 0
-    assert resp.action_type == 0
+
+    assert not resp.set_header(default_key, default_empty_str)
+    assert resp.set_header(default_key, default_val)
+    assert resp.get_header(default_key) == default_val
+
+    assert not resp.set_headers(default_empty_dict)
+    assert resp.set_headers({default_key: default_val})
+    assert resp.get_headers() == {default_key: default_val}
+
+    assert not resp.set_body(default_empty_str)
+    assert resp.set_body(default_val)
+    assert resp.get_body() == default_val
+
+    assert not resp.set_req_id(0)
+    assert resp.set_req_id(default_id)
+    assert resp.get_req_id() == default_id
+
+    assert not resp.set_status_code(default_num_zero)
+    assert resp.set_status_code(default_code)
+    assert resp.get_status_code() == default_code

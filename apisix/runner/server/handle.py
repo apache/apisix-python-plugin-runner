@@ -44,7 +44,7 @@ class Handle:
             # generate token
             token = runner_cache.generate_token()
             # get plugins config
-            configs = req.configs
+            configs = req.get_configs()
             # cache plugins config
             ok = runner_cache.set_config_by_token(token, configs)
             if not ok:
@@ -53,7 +53,7 @@ class Handle:
                 req.unknown_handler(builder)
                 return builder
 
-            req.conf_token = token
+            req.set_conf_token(token)
             ok = req.config_handler(builder)
             if not ok:
                 self.r.log.error("prepare conf request failure")
@@ -65,7 +65,7 @@ class Handle:
 
         elif self.r.request.ty == runner_utils.RPC_HTTP_REQ_CALL:
             # get request token
-            token = req.conf_token
+            token = req.get_conf_token()
             # get plugins
             configs = runner_cache.get_config_by_token(token)
 
@@ -76,8 +76,8 @@ class Handle:
                 return builder
 
             # init response
-            resp = NewHttpResponse(self.r.request.ty)
-            resp.id = req.id
+            resp = NewHttpResponse()
+            resp.set_req_id(req.get_id())
 
             # execute plugins
             ok = runner_plugin.execute(configs, self.r, req, resp)

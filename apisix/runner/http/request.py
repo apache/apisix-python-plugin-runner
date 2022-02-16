@@ -24,6 +24,7 @@ from A6.HTTPReqCall import Rewrite as HCRw
 from A6.HTTPReqCall import Action as HCAction
 from A6.HTTPReqCall import Req as HCReq
 from A6.PrepareConf import Req as PCReq
+from A6.Err.Code import Code as A6ErrCode
 
 
 class Request:
@@ -34,295 +35,305 @@ class Request:
         :param r:
             rpc request object
         """
-        self._rpc_type = r.request.ty
-        self._rpc_buf = r.request.data
-        self._req_id = 0
-        self.code = 0
-        self._req_conf_token = 0
-        self._req_method = ""
-        self._req_path = ""
-        self._req_headers = {}
-        self._req_configs = {}
-        self._req_args = {}
-        self._req_src_ip = ""
-        self._err_code = 0
+        # request object
+        self.r = r
+
+        # request attribute
+        self.__remote_addr = ""
+        self.__headers = {}
+        self.__args = {}
+        self.__uri = ""
+        self.__method = ""
+
+        # custom attribute
+        self.__conf_token = 0
+        self.__id = 0
+        self.__configs = {}
+
         self.__init()
 
-    @property
-    def rpc_type(self) -> int:
+    def get_header(self, key: str) -> str:
         """
-        get request protocol type for request handler
+        get request header
+        :param key:
         :return:
         """
-        return self._rpc_type
+        return self.__headers.get(key)
 
-    @rpc_type.setter
-    def rpc_type(self, rpc_type: int) -> None:
+    def set_header(self, key: str, value: str) -> bool:
         """
-        set request protocol type for request handler
-        :param rpc_type:
+        set request header
+        :param key:
+        :param value:
         :return:
         """
-        self._rpc_type = rpc_type
+        if key and value:
+            self.__headers[key] = value
+            return True
+        return False
 
-    @property
-    def rpc_buf(self) -> bytes:
+    def get_headers(self) -> dict:
         """
-        get request buffer data for request handler
+        get request headers
         :return:
         """
-        return self._rpc_buf
+        return self.__headers
 
-    @rpc_buf.setter
-    def rpc_buf(self, rpc_buf: bytes) -> None:
+    def set_headers(self, headers: dict) -> bool:
         """
-        set request buffer data for request handler
+        get request headers
+        :param headers:
         :return:
         """
-        self._rpc_buf = rpc_buf
+        if headers:
+            self.__headers = headers
+            return True
+        return False
 
-    @property
-    def conf_token(self) -> int:
+    def get_arg(self, key: str) -> str:
         """
-        get request token for request handler
+        get request param
+        :param key:
         :return:
         """
-        return self._req_conf_token
+        return self.__args.get(key)
 
-    @conf_token.setter
-    def conf_token(self, req_conf_token: int) -> None:
+    def set_arg(self, key: str, value: str) -> bool:
         """
-        set request token for request handler
+        set request param
+        :param key:
+        :param value:
         :return:
         """
-        self._req_conf_token = req_conf_token
+        if key and value:
+            self.__args[key] = value
+            return True
+        return False
 
-    @property
-    def id(self) -> int:
+    def get_args(self) -> dict:
         """
-        get request id for request handler
+        get request params
         :return:
         """
-        return self._req_id
+        return self.__args
 
-    @id.setter
-    def id(self, req_id: int) -> None:
+    def set_args(self, args: dict) -> bool:
         """
-        set request id for request handler
+        set request params
+        :param args:
         :return:
         """
-        self._req_id = req_id
+        if args:
+            self.__args = args
+            return True
+        return False
 
-    @property
-    def method(self) -> str:
+    def get_uri(self) -> str:
         """
-        get request method for request handler
+        get request uri
         :return:
         """
-        return self._req_method
+        return self.__uri
 
-    @method.setter
-    def method(self, req_method: str) -> None:
+    def set_uri(self, uri: str) -> bool:
         """
-        set request method for request handler
+        set request uri
+        :param uri:
         :return:
         """
-        self._req_method = req_method
+        if uri and uri.startswith("/"):
+            self.__uri = uri
+            return True
+        return False
 
-    @property
-    def path(self) -> str:
+    def get_remote_addr(self) -> str:
         """
-        get request path for request handler
+        get request client ip address
         :return:
         """
-        return self._req_path
+        return self.__remote_addr
 
-    @path.setter
-    def path(self, req_path: str) -> None:
+    def set_remote_addr(self, remote_addr: str) -> bool:
         """
-        set request path for request handler
+        set request client ip address
+        :param remote_addr:
         :return:
         """
-        self._req_path = req_path
+        if remote_addr:
+            self.__remote_addr = remote_addr
+            return True
+        return False
 
-    @property
-    def headers(self) -> dict:
+    def get_conf_token(self) -> int:
         """
-        get request headers for request handler
+        get request config token
         :return:
         """
-        return self._req_headers
+        return self.__conf_token
 
-    @headers.setter
-    def headers(self, req_headers: dict) -> None:
+    def set_conf_token(self, conf_token: int) -> bool:
         """
-        set request headers for request handler
+        set request config token
+        :param conf_token:
         :return:
         """
-        self._req_headers = req_headers
+        if conf_token:
+            self.__conf_token = conf_token
+            return True
+        return False
 
-    @property
-    def configs(self) -> dict:
+    def get_id(self):
         """
-        get plugin instance and configs for request handler
+        get request id
         :return:
         """
-        return self._req_configs
+        return self.__id
 
-    @configs.setter
-    def configs(self, req_configs: dict) -> None:
+    def set_id(self, id: int):
         """
-        set plugin instance and configs for request handler
+        set request id
+        :param id:
         :return:
         """
-        self._req_configs = req_configs
+        if id:
+            self.__id = id
+            return True
+        return False
 
-    @property
-    def args(self) -> dict:
+    def set_method(self, method: str) -> bool:
         """
-        get request args for request handler
+        set request method
+        :param method:
         :return:
         """
-        return self._req_args
+        # support common request method setting
+        if method and method.upper() in ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH"]:
+            self.__method = method
+            return True
+        return False
 
-    @args.setter
-    def args(self, req_args: dict) -> None:
+    def get_method(self) -> str:
         """
-        set request args for request handler
+        get request method
         :return:
         """
-        self._req_args = req_args
+        return self.__method
 
-    @property
-    def src_ip(self) -> str:
+    def set_config(self, key: str, value: str):
         """
-        get request source ip address for request handler
+        set plugin config
+        :param key:
+        :param value:
         :return:
         """
-        return self._req_src_ip
+        if key and value:
+            self.__configs[key] = value
+            return True
+        return False
 
-    @src_ip.setter
-    def src_ip(self, req_src_ip: str) -> None:
+    def get_config(self, key: str) -> str:
         """
-        set request source ip address for request handler
+        get plugin config
+        :param key:
         :return:
         """
-        self._req_src_ip = req_src_ip
+        return self.__configs.get(key)
 
-    @property
-    def err_code(self) -> int:
+    def get_configs(self) -> dict:
         """
-        get error code for request handler
+        get plugin configs
         :return:
         """
-        return self._err_code
+        return self.__configs
 
-    @err_code.setter
-    def err_code(self, err_code: int) -> None:
+    def set_configs(self, configs: dict) -> bool:
         """
-        set error code for request handler
+        set plugin configs
         :return:
         """
-        self._err_code = err_code
-
-    def reset(self) -> None:
-        """
-        reset request handler
-        :return:
-        """
-        """
-        reset request class
-        :return:
-        """
-        self._rpc_type = 0
-        self._rpc_buf = b''
-        self._req_id = 0
-        self._req_conf_token = 0
-        self._req_method = ""
-        self._req_path = ""
-        self._req_headers = {}
-        self._req_configs = {}
-        self._req_args = {}
-        self._req_src_ip = ""
+        if configs:
+            self.__configs = configs
+            return True
+        return False
 
     def __init(self) -> None:
         """
         init request handler
         :return:
         """
-        if self.rpc_type == runner_utils.RPC_HTTP_REQ_CALL:
-            req = HCReq.Req.GetRootAsReq(self.rpc_buf)
+        if self.r.request.ty == runner_utils.RPC_HTTP_REQ_CALL:
+            req = HCReq.Req.GetRootAsReq(self.r.request.data)
 
             # fetch request id
-            self.id = req.Id()
+            self.set_id(req.Id())
 
             # fetch request conf token
-            self.conf_token = req.ConfToken()
-
-            # fetch request uri
-            self.path = req.Path().decode()
+            self.set_conf_token(req.ConfToken())
 
             # fetch request method
-            self.method = runner_utils.get_method_name_by_code(req.Method())
+            self.set_method(runner_utils.get_method_name_by_code(req.Method()))
 
             # fetch request remote_addr
             ip_list = runner_utils.parse_list_vector(req, runner_utils.VECTOR_TYPE_SOURCE_IP, True)
-            if ip_list:
-                if len(ip_list) == 16:
-                    self.src_ip = IPv6Address(bytes(ip_list)).exploded
-                else:
-                    self.src_ip = IPv4Address(bytes(ip_list)).exploded
+            if len(ip_list) == 16:
+                self.set_remote_addr(IPv6Address(bytes(ip_list)).exploded)
+            else:
+                self.set_remote_addr(IPv4Address(bytes(ip_list)).exploded)
+
+            # fetch request uri
+            self.set_uri(req.Path().decode())
 
             # fetch request headers
             hdr_dict = runner_utils.parse_dict_vector(req, runner_utils.VECTOR_TYPE_HEADER)
-            if hdr_dict:
-                self.headers = hdr_dict
+            self.set_headers(hdr_dict)
 
             # fetch request args
             arg_dict = runner_utils.parse_dict_vector(req, runner_utils.VECTOR_TYPE_QUERY)
-            if arg_dict:
-                self.args = arg_dict
+            self.set_args(arg_dict)
 
-        if self.rpc_type == runner_utils.RPC_PREPARE_CONF:
-            req = PCReq.Req.GetRootAsReq(self.rpc_buf)
-            if req.ConfIsNone():
-                return
-
-            configs = {}
+        if self.r.request.ty == runner_utils.RPC_PREPARE_CONF:
+            req = PCReq.Req.GetRootAsReq(self.r.request.data)
             for i in range(req.ConfLength()):
                 # fetch request config
                 name = req.Conf(i).Name().decode()
                 config = req.Conf(i).Value().decode()
-                configs[name] = config
-            self.configs = configs
+                self.set_config(name, config)
 
     def checked(self):
         """
         check request params is valid
         :return:
         """
-        if len(self._req_path) == 0 and len(self._req_headers) == 0 and len(self._req_args) == 0:
+        if len(self.__uri) == 0 and len(self.__headers) == 0 and len(self.__args) == 0:
             return False
         else:
             return True
 
     @runner_utils.response_config
     def config_handler(self, builder: flatbuffers.Builder):
-        return self.conf_token
+        """
+        get config setting response
+        :param builder:
+        :return:
+        """
+        return self.get_conf_token()
 
     @runner_utils.response_call(HCAction.Action.Rewrite)
     def call_handler(self, builder: flatbuffers.Builder):
+        """
+        get http call response
+        :param builder:
+        :return:
+        """
         if not self.checked():
             return None, 0
 
-        if len(self._req_path) <= 0:
-            self._req_path = "/"
-        path_vector = runner_utils.create_str_vector(builder, self._req_path)
+        path_vector = runner_utils.create_str_vector(builder, self.get_uri())
 
-        headers_vector = runner_utils.create_dict_vector(builder, self._req_headers, HCAction.Action.Rewrite,
+        headers_vector = runner_utils.create_dict_vector(builder, self.get_headers(), HCAction.Action.Rewrite,
                                                          runner_utils.VECTOR_TYPE_HEADER)
 
-        args_vector = runner_utils.create_dict_vector(builder, self._req_args, HCAction.Action.Rewrite,
+        args_vector = runner_utils.create_dict_vector(builder, self.get_args(), HCAction.Action.Rewrite,
                                                       runner_utils.VECTOR_TYPE_QUERY)
 
         HCRw.RewriteStart(builder)
@@ -330,8 +341,13 @@ class Request:
         HCRw.RewriteAddHeaders(builder, headers_vector)
         HCRw.RewriteAddArgs(builder, args_vector)
         rewrite = HCRw.RewriteEnd(builder)
-        return rewrite, self._req_id
+        return rewrite, self.get_id()
 
     @runner_utils.response_unknown
     def unknown_handler(self, builder: flatbuffers.Builder):
-        return self._err_code
+        """
+        get unknown response
+        :param builder:
+        :return:
+        """
+        return A6ErrCode.BAD_REQUEST

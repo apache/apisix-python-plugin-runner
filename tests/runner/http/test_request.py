@@ -42,10 +42,10 @@ def test_request_config_handler():
 
     r = default_request()
     req = RunnerHttpRequest(r)
-    req.conf_token = 0
+    req.set_conf_token(0)
     ok = req.config_handler(builder)
     assert not ok
-    req.conf_token = 1
+    req.set_conf_token(1)
     ok = req.config_handler(builder)
     assert ok
 
@@ -54,53 +54,75 @@ def test_request_call_handler():
     builder = runner_utils.new_builder()
     r = default_request()
     req = RunnerHttpRequest(r)
-    req.path = ""
-    req.headers = {}
-    req.args = {}
+    req.set_uri("")
+    req.set_headers({})
+    req.set_args({})
     ok = req.call_handler(builder)
     assert not ok
-    req.headers["X-Hello"] = "World"
-    req.id = 1
+    req.set_header("X-Hello", "World")
+    req.set_id(1)
     ok = req.call_handler(builder)
     assert ok
-    req.path = "/hello"
+    req.set_uri("/hello")
+    req.set_id(1)
     ok = req.call_handler(builder)
     assert ok
 
 
 def test_request_handler():
+    default_key = "hello"
+    default_val = "world"
+    default_empty_str = ""
+    default_empty_dict = {}
+    default_id = 1000
+    default_token = 1
+    default_uri = "/hello"
+    default_method = "GET"
+    default_ip = "127.0.0.1"
+
     r = default_request()
     req = RunnerHttpRequest(r)
-    req.id = 1000
-    assert req.id == 1000
-    req.rpc_type = runner_utils.RPC_UNKNOWN
-    assert req.rpc_type == runner_utils.RPC_UNKNOWN
-    req.rpc_buf = b'hello'
-    assert req.rpc_buf == b'hello'
-    req.conf_token = 10
-    assert req.conf_token == 10
-    req.method = "GET"
-    assert req.method == "GET"
-    req.path = "/hello"
-    assert req.path == "/hello"
-    req.headers = {"X-HELLO": "Python"}
-    assert req.headers == {"X-HELLO": "Python"}
-    req.configs = {"hello": "Python"}
-    assert req.configs == {"hello": "Python"}
-    req.args = {"hello": "Python"}
-    assert req.args == {"hello": "Python"}
-    req.src_ip = "127.0.0.1"
-    assert req.src_ip == "127.0.0.1"
-    req.err_code = 400
-    assert req.err_code == 400
-    req.reset()
-    assert req.rpc_type == 0
-    assert req.rpc_buf == b''
-    assert req.id == 0
-    assert req.conf_token == 0
-    assert req.method == ""
-    assert req.path == ""
-    assert req.headers == {}
-    assert req.configs == {}
-    assert req.args == {}
-    assert req.src_ip == ""
+
+    assert not req.set_id(0)
+    assert req.set_id(default_id)
+    assert req.get_id() == default_id
+
+    assert not req.set_conf_token(0)
+    assert req.set_conf_token(default_token)
+    assert req.get_conf_token() == default_token
+
+    assert not req.set_method(default_key)
+    assert req.set_method(default_method)
+    assert req.get_method() == default_method
+
+    assert not req.set_uri(default_key)
+    assert req.set_uri(default_uri)
+    assert req.get_uri() == default_uri
+
+    assert not req.set_header(default_key, default_empty_str)
+    assert req.set_header(default_key, default_val)
+    assert req.get_header(default_key) == default_val
+
+    assert not req.set_headers(default_empty_dict)
+    assert req.set_headers({default_key: default_val})
+    assert req.get_headers() == {default_key: default_val}
+
+    assert not req.set_config(default_key, default_empty_str)
+    assert req.set_config(default_key, default_val)
+    assert req.get_config(default_key) == default_val
+
+    assert not req.set_configs(default_empty_dict)
+    assert req.set_configs({default_key: default_val})
+    assert req.get_configs() == {default_key: default_val}
+
+    assert not req.set_arg(default_key, default_empty_str)
+    assert req.set_arg(default_key, default_val)
+    assert req.get_arg(default_key) == default_val
+
+    assert not req.set_args(default_empty_dict)
+    assert req.set_args({default_key: default_val})
+    assert req.get_args() == {default_key: default_val}
+
+    assert not req.set_remote_addr(default_empty_str)
+    assert req.set_remote_addr(default_ip)
+    assert req.get_remote_addr() == default_ip
