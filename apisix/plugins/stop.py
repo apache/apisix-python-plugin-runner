@@ -51,7 +51,15 @@ class Stop(PluginBase):
         """
 
         # print plugin configuration
-        # print(conf)
+        print(conf)
+
+        # Fetch request nginx variable `host`
+        host = request.get_var("host")
+        print(host)
+
+        # Fetch request body
+        body = request.get_body()
+        print(body)
 
         # Set response headers
         response.set_header("X-Resp-A6-Runner", "Python")

@@ -126,3 +126,13 @@ def test_request_handler():
     assert not req.set_remote_addr(default_empty_str)
     assert req.set_remote_addr(default_ip)
     assert req.get_remote_addr() == default_ip
+
+    assert not req.set_body(default_empty_str)
+    assert req.get_body() == default_empty_str
+    assert req.set_body(default_val)
+    assert req.get_body() == default_val
+
+    assert not req.set_var(default_key, default_empty_str)
+    assert req.get_var(default_key) == default_empty_str
+    assert req.set_var(default_key, default_val)
+    assert req.get_var(default_key) == default_val

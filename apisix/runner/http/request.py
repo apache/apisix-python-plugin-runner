@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+import socket
 import flatbuffers
 import apisix.runner.utils.common as runner_utils
 
@@ -25,6 +26,13 @@ from A6.HTTPReqCall import Action as HCAction
 from A6.HTTPReqCall import Req as HCReq
 from A6.PrepareConf import Req as PCReq
 from A6.Err.Code import Code as A6ErrCode
+from A6.ExtraInfo import Var as EIVar
+from A6.ExtraInfo import ReqBody as EIBody
+from A6.ExtraInfo import Info as EIInfo
+from A6.ExtraInfo import Req as EIReq
+from A6.ExtraInfo import Resp as EIResp
+from apisix.runner.server.protocol import Protocol as RunnerServerProtocol
+from apisix.runner.server.response import RESP_STATUS_CODE_OK
 
 
 class Request:
@@ -44,6 +52,8 @@ class Request:
         self.__args = {}
         self.__uri = ""
         self.__method = ""
+        self.__vars = {}
+        self.__body = ""
 
         # custom attribute
         self.__conf_token = 0
@@ -89,6 +99,103 @@ class Request:
             self.__headers = headers
             return True
         return False
+
+    def get_var(self, key: str) -> str:
+        """
+        get nginx variable
+        :param key:
+        :return:
+        """
+        if self.__vars.get(key):
+            return self.__vars.get(key)
+        # generate fetch variable RPC request data
+        builder = runner_utils.new_builder()
+        var_name = builder.CreateString(key)
+        EIVar.Start(builder)
+        EIVar.AddName(builder, var_name)
+        var_req_data = EIVar.End(builder)
+        val = self.__ask_extra_info(builder, EIInfo.Info.Var, var_req_data)
+        self.set_var(key, val)
+        return val
+
+    def set_var(self, key: str, val: str) -> bool:
+        """
+        set nginx variable
+        :param key:
+        :param val:
+        :return:
+        """
+        if key and val:
+            self.__vars[key] = val
+            return True
+        return False
+
+    def get_body(self) -> str:
+        """
+        get request body
+        :return:
+        """
+        if self.__body:
+            return self.__body
+        # generate fetch body RPC request data
+        builder = runner_utils.new_builder()
+        EIBody.Start(builder)
+        body_req_data = EIBody.End(builder)
+        val = self.__ask_extra_info(builder, EIInfo.Info.ReqBody, body_req_data)
+        self.set_body(val)
+        return val
+
+    def set_body(self, body: str) -> bool:
+        """
+        set request body
+        :param body:
+        :return:
+        """
+        if body:
+            self.__body = body
+            return True
+        return False
+
+    def __ask_extra_info(self, builder: flatbuffers.Builder, ty, data) -> str:
+        """
+        nginx built-in variable and request body rpc calls
+        :param builder:
+        :param ty:
+        :param data:
+        :return:
+        """
+        res_val = []
+        EIReq.Start(builder)
+        EIReq.AddInfoType(builder, ty)
+        EIReq.AddInfo(builder, data)
+        res = EIReq.End(builder)
+        builder.Finish(res)
+        out = builder.Output()
+
+        try:
+            protocol = RunnerServerProtocol(out, runner_utils.RPC_EXTRA_INFO)
+            protocol.encode()
+            self.r.conn.sendall(protocol.buffer)
+        except socket.timeout as e:
+            self.r.log.info("connection timout: {}", e.args.__str__())
+        except socket.error as e:
+            self.r.log.error("connection error: {}", e.args.__str__())
+        except BaseException as e:
+            self.r.log.error("any error: {}", e.args.__str__())
+        else:
+            buf = self.r.conn.recv(runner_utils.RPC_PROTOCOL_HEADER_LEN)
+            protocol = RunnerServerProtocol(buf, 0)
+            err = protocol.decode()
+            if err.code == RESP_STATUS_CODE_OK:
+                buf = self.r.conn.recv(protocol.length)
+                resp = EIResp.Resp.GetRootAs(buf)
+                for i in range(resp.ResultLength()):
+                    vector = resp.Result(i)
+                    res_val.append(chr(vector))
+            else:
+                self.r.log.error(err.message)
+
+        return "".join(res_val)
 
     def get_arg(self, key: str) -> str:
         """
