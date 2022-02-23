@@ -26,8 +26,11 @@ from A6.HTTPReqCall import Resp as HCResp
 from A6.PrepareConf import Resp as PCResp
 from A6.Err import Resp as ErrResp
 
+RPC_PROTOCOL_HEADER_LEN = 4
+
 RPC_PREPARE_CONF = 1
 RPC_HTTP_REQ_CALL = 2
+RPC_EXTRA_INFO = 3
 RPC_UNKNOWN = 0
 
 VECTOR_TYPE_HEADER = 1
