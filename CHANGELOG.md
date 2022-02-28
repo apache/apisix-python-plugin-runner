@@ -24,6 +24,7 @@ title: Changelog
 ## Table of Contents
 
 - [0.1.0](#010)
+- [0.2.0](#020)
 
 ## 0.1.0
 
@@ -35,5 +36,20 @@ This release mainly provides basic features and adds test cases.
 - complete united test with [APISIX 2.7](https://github.com/apache/apisix/tree/release/2.7).
 - supported debug mode.
 - supported custom `stop` and `rewrite` plugin development.
+
+[Back to TOC](#table-of-contents)
+
+## 0.2.0
+
+This release mainly refactors the operation objects of request/response and the way of automatic loading of plugins for
+more efficient plugin development.
+
+### Core
+
+- `Request` and `Response` operation object refactoring.
+- Plugin `auto registr` and `auto loading` refactoring.
+- Supports getting the `request body` and `Nginx built-in variables` in the plugin.
+- Specification and unifies the input and output of RPC requests.
+- Inheritance interface for specification plugins.
 
 [Back to TOC](#table-of-contents)
