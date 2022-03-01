@@ -28,7 +28,7 @@ This documentation explains how to develop this project.
 ## Prerequisites
 
 * Python 3.7+
-* APISIX 2.7.0
+* APISIX 2.7.0+
 
 ## Debug
 
@@ -56,56 +56,69 @@ the `.py` files in this directory autoload
 #### Plugin Format
 
 ```python
-from apisix.runner.plugin.base import Base
+from typing import Any
 from apisix.runner.http.request import Request
 from apisix.runner.http.response import Response
+from apisix.runner.plugin.core import PluginBase
 
 
-class Test(Base):
-    def __init__(self):
-        super(Test, self).__init__(self.__class__.__name__)
+class Test(PluginBase):
 
-    def filter(self, request: Request, response: Response):
+    def name(self) -> str:
+        """
+        The name of the plugin registered in the runner
+        :return:
+        """
+        return "test"
+
+    def config(self, conf: Any) -> Any:
+        """
+        Parse plugin configuration
+        :param conf:
+        :return:
+        """
+        return conf
+
+    def filter(self, conf: Any, request: Request, response: Response):
         """
         The plugin executes the main function
+        :param conf:
+            plugin configuration after parsing
         :param request:
             request parameters and information
         :param response:
             response parameters and information
         :return:
         """
-        # Get plugin configuration information through `self.config`
-        # print(self.config)
 
-        # Setting the request object will continue to forward the request
+        # print plugin configuration
+        print(conf)
 
-        # Rewrite request headers
-        request.headers["X-Resp-A6-Runner"] = "Python"
+        # Fetch request nginx variable `host`
+        host = request.get_var("host")
+        print(host)
 
-        # Rewrite request args
-        request.args["a6_runner"] = "Python"
-
-        # Rewrite request path
-        request.path = "/a6/python/runner"
-
-        # Setting the response object will terminate the request and respond to the data
+        # Fetch request body
+        body = request.get_body()
+        print(body)
 
         # Set response headers
-        response.headers["X-Resp-A6-Runner"] = "Python"
+        response.set_header("X-Resp-A6-Runner", "Python")
 
         # Set response body
-        response.body = "Hello, Python Runner of APISIX"
+        response.set_body("Hello, Python Runner of APISIX")
 
         # Set response status code
-        response.status_code = 201
+        response.set_status_code(201)
 ```
 
-- The plugin must inherit the `Base` class
-- The plugin must implement the `filter` function
-- `filter` function parameters can only contain `Request` and `Response` classes as parameters
-- Request parameter can get and set request information
-- Response parameter can set response information
-- `self.config` can get plug-in configuration information
+- Plugins must inherit the `PluginBase` class and implement all functions.
+  - `name` function: used to set the registered plugin name.
+  - `config` function: used to parse plugin configuration.
+  - `filter` function: used to filter requests.
+    - `conf` parameter: plugin configuration after parsing.
+    - `request` parameter: Request object, which can be used to get and set request information.
+    - `response` parameter: Response object, which can be used to set response information.
 
 ## Test
 
