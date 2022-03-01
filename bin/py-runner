@@ -24,7 +24,7 @@ from apisix.runner.server.server import Server as RunnerServer
 from apisix.runner.server.config import Config as RunnerConfig
 from apisix.runner.plugin.core import PluginProcess as RunnerPlugin
 
-RUNNER_VERSION = "0.1.0"
+RUNNER_VERSION = "0.2.0"
 
 
 @click.group()
