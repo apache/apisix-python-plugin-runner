@@ -333,7 +333,7 @@ class Request:
         :param value:
         :return:
         """
-        if key and value:
+        if key:
             self.__configs[key] = value
             return True
         return False

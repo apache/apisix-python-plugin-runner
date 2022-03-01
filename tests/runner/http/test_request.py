@@ -107,7 +107,8 @@ def test_request_handler():
     assert req.set_headers({default_key: default_val})
     assert req.get_headers() == {default_key: default_val}
 
-    assert not req.set_config(default_key, default_empty_str)
+    assert not req.set_config(default_empty_str, default_empty_str)
+    assert req.set_config(default_key, default_empty_str)
     assert req.set_config(default_key, default_val)
     assert req.get_config(default_key) == default_val
 
