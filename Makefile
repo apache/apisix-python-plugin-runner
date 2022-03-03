@@ -43,7 +43,7 @@ lint: clean
 
 .PHONY: clean
 clean:
-	rm -rf apache_apisix.egg-info dist build assets .coverage report.html
+	rm -rf apache_apisix.egg-info dist build assets .coverage report.html release
 	find . -name "__pycache__" -exec rm -r {} +
 	find . -name ".pytest_cache" -exec rm -r {} +
 	find . -name "*.pyc" -exec rm -r {} +
@@ -56,7 +56,8 @@ dev:
 
 .PHONY: release
 release:
-	tar -zcvf $(RELEASE_SRC).tgz apisix docs tests *.md LICENSE Makefile NOTICE pytest.ini requirements.txt setup.py
+	tar -zcvf $(RELEASE_SRC).tgz apisix bin docs tests conf setup.py *.md \
+ 	LICENSE Makefile NOTICE pytest.ini requirements.txt
 	gpg --batch --yes --armor --detach-sig $(RELEASE_SRC).tgz
 	shasum -a 512 $(RELEASE_SRC).tgz > $(RELEASE_SRC).tgz.sha512
 	mkdir -p release
