@@ -18,12 +18,12 @@
 package plugins_test
 
 import (
+    "github.com/apache/apisix-python-plugin-runner/tests/e2e/tools"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/extensions/table"
 	"net/http"
-
-	"github.com/apache/apisix-python-plugin-runner/tests/e2e/tools"
+	"time"
 )
 
 var _ = ginkgo.Describe("Stop Plugin", func() {
