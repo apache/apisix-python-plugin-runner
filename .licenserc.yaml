@@ -32,5 +32,7 @@ header:
     - '**/images/**'
     - '**/config.json'
     - '.github/'
+    - '**/go.mod'
+    - '**/go.sum'
 
   comment: on-failure
