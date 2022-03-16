@@ -15,24 +15,23 @@
 # limitations under the License.
 #
 
-header:
-  license:
-    spdx-id: Apache-2.0
-    copyright-owner: Apache Software Foundation
-
-  paths-ignore:
-    - '.gitignore'
-    - '.coverage'
-    - '.coveragerc'
-    - 'LICENSE'
-    - 'NOTICE'
-    - 'pytest.ini'
-    - '.pytest_cache/**'
-    - '**/__pycache__/**'
-    - '**/images/**'
-    - '**/config.json'
-    - '.github/'
-    - '**/go.mod'
-    - '**/go.sum'
-
-  comment: on-failure
+apisix:
+  allow_admin:
+    - 0.0.0.0/0
+  enable_control: true
+  control:
+    ip: "0.0.0.0"
+    port: 9092
+  admin_key:
+    - name: admin
+      key: edd1c9f034335f136f87ad84b625c8f1
+      role: admin
+etcd:
+   host:
+     - http://etcd:2379
+   prefix: "/apisix"
+   timeout: 30
+ext-plugin:
+  path_for_test: /tmp/runner.sock
+nginx_config:
+  user: root
