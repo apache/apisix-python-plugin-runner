@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+from tkinter.messagebox import NO
 import flatbuffers
 from A6 import Method as A6Method
 from A6 import TextEntry as A6Entry
@@ -224,8 +225,12 @@ def parse_dict_vector(cls: object, ty: int) -> dict:
         return res
 
     for i in range(length):
-        key = getattr(cls, fn)(i).Name().decode()
-        val = getattr(cls, fn)(i).Value().decode()
+        key = getattr(cls, fn)(i).Name()
+        if key is not None:
+            key = key.decode()
+        val = getattr(cls, fn)(i).Value()
+        if key is not None:
+            val = val.decode()
         res[key] = val
 
     return res
