@@ -15,9 +15,11 @@
 # limitations under the License.
 #
 
+import grp
 import os
 import socket
 
+from pwd import getpwnam
 from threading import Thread as NewThread
 from apisix.runner.server.handle import Handle as NewServerHandle
 from apisix.runner.server.protocol import Protocol as NewServerProtocol
@@ -82,6 +84,7 @@ class Server:
             os.remove(self.fd)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.bind(self.fd)
+        os.chown(self.fd, getpwnam('nobody').pw_uid, grp.getgrnam('nobody').gr_gid)
         self.sock.listen(1024)
 
         self.logger = NewServerLogger(config.logging.level)
