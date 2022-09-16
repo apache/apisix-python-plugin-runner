@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-import grp
 import os
 import socket
 
@@ -84,7 +83,8 @@ class Server:
             os.remove(self.fd)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.bind(self.fd)
-        os.chown(self.fd, getpwnam('nobody').pw_uid, grp.getgrnam('nobody').gr_gid)
+        user = getpwnam('nobody') # TODO: load from conf? 
+        os.chown(self.fd, user.pw_uid, user.pw_gid)
         self.sock.listen(1024)
 
         self.logger = NewServerLogger(config.logging.level)
