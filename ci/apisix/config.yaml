@@ -45,7 +45,7 @@ deployment:
 
   etcd:
     host:
-      - "http://127.0.0.1:2379"
+      - "http://etcd:2379"
     timeout: 30
     startup_retry: 2
 
