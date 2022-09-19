@@ -84,6 +84,12 @@ class Server:
         self.sock.bind(self.fd)
         self.sock.listen(1024)
 
+        # the default socket permission is 0755, which prevents the 'nobody' worker process
+        # from writing to it if the APISIX is run under root.
+        os.chmod(self.fd, 0o766)
+        if os.stat(self.fd).st_mode & 0xfff != 0o766:
+            raise Exception("can't change mode for unix socket permission to 766")
+
         self.logger = NewServerLogger(config.logging.level)
 
         print("listening on unix:%s" % self.fd)
