@@ -27,7 +27,7 @@ import (
 
 var (
 	token  = "edd1c9f034335f136f87ad84b625c8f1"
-	A6Host = "http://127.0.0.1:9080"
+	A6Host = "http://127.0.0.1:9180"
 )
 
 func GetAdminToken() string {
