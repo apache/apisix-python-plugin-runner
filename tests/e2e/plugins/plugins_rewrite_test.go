@@ -32,7 +32,7 @@ var _ = ginkgo.Describe("Rewrite Plugin", func() {
 			tools.RunTestCase(tc)
 		},
 		table.Entry("create python runner rewrite plugin route success", tools.HttpTestCase{
-			Object: tools.GetA6Expect(),
+			Object: tools.PutA6Conf(),
 			Method: http.MethodPut,
 			Path:   "/apisix/admin/routes/1",
 			Body: `{
