@@ -27,6 +27,7 @@ class _ConfigSocket:
         init socket config handler
         """
         self.file = "/tmp/runner.sock"
+        self.owner = "nobody"
 
     @property
     def file(self):
@@ -36,6 +37,14 @@ class _ConfigSocket:
         """
         return self._file
 
+    @property
+    def owner(self):
+        """
+        get config owner for socket
+        :return:
+        """
+        return self._owner
+
     @file.setter
     def file(self, file: str) -> None:
         """
@@ -44,6 +53,15 @@ class _ConfigSocket:
         :return:
         """
         self._file = file.replace("unix:", "")
+    
+    @owner.setter
+    def owner(self, owner: str) -> None:
+        """
+        set config owner for socket
+        :param owner:
+        :return:
+        """
+        self._owner = owner
 
 
 class _ConfigLogging:
@@ -128,6 +146,12 @@ class Config:
         socket_file = self._get_env_config(socket.get("file"))
         if socket_file:
             self.socket.file = socket_file
+        # owner config
+        socket_owner = self._get_env_config(socket.get("owner"))
+        if socket_owner:
+            self.socket.owner = socket_owner
+        else:
+            self.socket.owner = "nobody"
 
         # logging config
         logger = configs.get("logging", {})

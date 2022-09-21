@@ -38,9 +38,11 @@ def test_config_default():
     config.socket.file = "/test/runner.sock"
     assert config.socket.file == "/test/runner.sock"
 
+    assert config.socket.owner == "nobody"
+
 
 def test_config_custom():
-    config = NewServerConfig("%s" % os.path.abspath(os.path.join(os.getcwd())), "config.yaml")
+    config = NewServerConfig("%s" % os.path.abspath(os.path.join(os.getcwd(), "tests")), "config_with_owner.yaml")
 
     config.logging.level = "NOTSET"
     assert config.logging.level == logging.NOTSET
@@ -56,3 +58,5 @@ def test_config_custom():
 
     config.socket.file = "/test/runner.sock"
     assert config.socket.file == "/test/runner.sock"
+
+    assert config.socket.owner == "somebody"

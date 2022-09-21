@@ -17,7 +17,6 @@
 
 socket:
   file: $env.APISIX_LISTEN_ADDRESS # Environment variable or absolute path
-  # owner: somebody # optional Environment variable or user name
 
 
 logging:

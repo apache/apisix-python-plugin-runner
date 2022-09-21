@@ -18,6 +18,7 @@
 import os
 import socket
 
+from pwd import getpwnam
 from threading import Thread as NewThread
 from apisix.runner.server.handle import Handle as NewServerHandle
 from apisix.runner.server.protocol import Protocol as NewServerProtocol
@@ -82,6 +83,8 @@ class Server:
             os.remove(self.fd)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.bind(self.fd)
+        user = getpwnam(config.socket.owner)
+        os.chown(self.fd, user.pw_uid, user.pw_gid)
         self.sock.listen(1024)
 
         # the default socket permission is 0755, which prevents the 'nobody' worker process
