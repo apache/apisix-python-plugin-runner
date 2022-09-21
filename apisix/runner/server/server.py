@@ -83,7 +83,7 @@ class Server:
             os.remove(self.fd)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.bind(self.fd)
-        user = getpwnam('nobody') # TODO: load from conf? 
+        user = getpwnam(config.socket.owner)
         os.chown(self.fd, user.pw_uid, user.pw_gid)
         self.sock.listen(1024)
 

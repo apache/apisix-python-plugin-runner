@@ -22,13 +22,13 @@ title: Getting started
 -->
 
 ## Overview
+
 This document explains how to use Python Runner
 
 ## Prerequisites
 
-* Python 3.7+
-* APISIX 2.7.0+
-
+- Python 3.7+
+- APISIX 2.7.0+
 
 ## Installation
 
@@ -46,12 +46,14 @@ $ make install
 > Development Mode
 
 #### Run APISIX Python Runner
+
 ```bash
 $ cd /path/to/apisix-python-plugin-runner
 $ make dev
 ```
 
 #### Modify APISIX configuration file
+
 ```bash
 $ vim /path/to/apisix/conf/config.yaml
 apisix:
@@ -66,6 +68,7 @@ ext-plugin:
 > Production Mode
 
 #### Modify APISIX configuration file
+
 ```bash
 $ vim /path/to/apisix/conf/config.yaml
 apisix:
@@ -83,12 +86,14 @@ ext-plugin:
 $ vim /path/to/apisix-python-plugin-runner/conf/config.yaml
 socket:
   file: $env.APISIX_LISTEN_ADDRESS # Environment variable or absolute path
+  owner: $env.SOCKET_OWNER # optional Environment variable or user name. Default: 'nobody' (default user for Apisix runners)
 
 logging:
   level: debug # error warn info debug
 ```
 
 ### Start or Restart APISIX
+
 ```bash
 $ cd /path/to/apisix
 # Start or Restart
@@ -96,6 +101,7 @@ $ ./bin/apisix [ start | restart ]
 ```
 
 ### Configure APISIX Routing Rule
+
 ```bash
 $ curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
@@ -116,8 +122,8 @@ $ curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f
 }'
 ```
 
-
 # Testing
+
 ```bash
 $ curl http://127.0.0.1:9080/get -i
 HTTP/1.1 200 OK

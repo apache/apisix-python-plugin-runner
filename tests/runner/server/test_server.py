@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+import os
 from pwd import struct_passwd
 import socket
 import logging
@@ -27,7 +28,7 @@ from apisix.runner.server.config import Config as RunnerConfig
 @patch('pwd.getpwnam', return_value=struct_passwd({"pw_name":"nobody", "pw_passwd":"x", "pw_uid":65534, "pw_gid":65534, "pw_gecos":"nobody", "pw_dir":"/", "pw_shell":"/sbin/nologin"}))
 @patch('os.chown')
 def test_server(mock_chown,mock_getpwnam,capsys):
-    config = RunnerConfig()
+    config = RunnerConfig("%s" % os.path.abspath(os.path.join(os.getcwd(),"tests")), "config.yaml")
     server = RunnerServer(config)
     mock_chown.assert_called_with("/tmp/runner.sock",65534,65534)
     del server
